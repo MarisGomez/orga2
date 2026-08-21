@@ -27,3 +27,11 @@ _start:
 ;$ ld -o HolaMundo HolaMundo.o
 ;(Y finalmente lo ejecutamos con:)
 ;$ ./HolaMundo
+
+; una vez tengo el Makefile ejecuramos
+;$ make 
+; o en su defecto
+;$ make clean
+;$ make
+; y ahora sí
+;$ ./HolaMundo
