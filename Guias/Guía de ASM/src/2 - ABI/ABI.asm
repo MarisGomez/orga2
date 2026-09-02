@@ -97,9 +97,20 @@ alternate_sum_4_using_c_alternative:
 
 
 ; uint32_t alternate_sum_8(uint32_t x1, uint32_t x2, uint32_t x3, uint32_t x4, uint32_t x5, uint32_t x6, uint32_t x7, uint32_t x8);
-; registros y pila: x1[?], x2[?], x3[?], x4[?], x5[?], x6[?], x7[?], x8[?]
+; registros y pila: 
+; x1[EDI] Por convención de llamadas (64 bits)
+; x2[ESI]                 ""
+; x3[EDX]                 ""
+; x4[ECX]                 ""
+; x5[R8D]                 ""
+; x6[R9D]                 ""
+; x7[RBP+16] A este punto, nos quedamos sin registros y comenzamos a pushear a pila
+; x8[RBP+24]
 alternate_sum_8:
 	;prologo
+  push RBP
+  mov RBP, RSP
+  sub RSP, 
 
 	; COMPLETAR
 
