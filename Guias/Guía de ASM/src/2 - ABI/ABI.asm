@@ -112,10 +112,10 @@ alternate_sum_8:
   mov RBP, RSP
   sub RSP, 32 ; muevo el tope de la pila 8 bytes para guardar x4, 8 para x5 y 8 para x6 (+ 8 bytes para que quede alineada)
 
-	mov dword [rbp-8], rdx  ; x3  | Notar que, no guardo x7 y x8 porque ya tienen su espacio en pila
-  mov dword [rbp-16], rcx ; x4  | 
-  mov dword [rbp-24], r8  ; x5  | 
-  mov dword [rbp-32], r9  ; x6  | OBS: los desplazamientos negativos son para variables locales
+	mov [rbp-8], rdx  ; x3  | Notar que, no guardo x7 y x8 porque ya tienen su espacio en pila
+  mov [rbp-16], rcx ; x4  | 
+  mov [rbp-24], r8  ; x5  | 
+  mov [rbp-32], r9  ; x6  | OBS: los desplazamientos negativos son para variables locales
 
   ; x1 - x2
   call restar_c 
