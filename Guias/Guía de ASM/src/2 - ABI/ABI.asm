@@ -181,15 +181,15 @@ product_2_f:
 ;, uint32_t x9, float f9);
 ;registros y pila: 
 ; destination[RDI]
-; x1[?]                    f1[?]
-; x2[?]                    f2[?]
-; x3[?]                    f3[?]
-; x4[?]                    f4[?]
-; x5[?]                    f5[?]
-; x6[?]                    f6[?]
-; x7[?]                    f7[?]
-; x8[?]                    f8[?]
-;	x9[?]                    f9[?]
+; x1[ESI]                    f1[XMM0]
+; x2[EDX]                    f2[XMM1]
+; x3[ECX]                    f3[XMM2]
+; x4[R8D]                    f4[XMM3]
+; x5[R9D]                    f5[XMM4]
+; x6[RBP+16]                 f6[XMM5]
+; x7[RBP+24]                 f7[XMM6]
+; x8[RBP+32]                 f8[XMM7]
+;	x9[RBP+40]                 f9[RBP+48]
 product_9_f:
 	;prologo
 	push rbp
