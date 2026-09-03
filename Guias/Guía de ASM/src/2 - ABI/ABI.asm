@@ -105,17 +105,57 @@ alternate_sum_4_using_c_alternative:
 ; x5[R8D]                 ""
 ; x6[R9D]                 ""
 ; x7[RBP+16] A este punto, nos quedamos sin registros y comenzamos a pushear a pila
-; x8[RBP+24]
+; x8[RBP+24] OBS: normalmente los argumentos pasados por pila se acceden mediante desplazamientos positivos
 alternate_sum_8:
 	;prologo
   push RBP
   mov RBP, RSP
-  sub RSP, 
+  sub RSP, 32 ; muevo el tope de la pila 8 bytes para guardar x4, 8 para x5 y 8 para x6 (+ 8 bytes para que quede alineada)
 
-	; COMPLETAR
+	mov dword [rbp-8], rdx  ; x3  | Notar que, no guardo x7 y x8 porque ya tienen su espacio en pila
+  mov dword [rbp-16], rcx ; x4  | 
+  mov dword [rbp-24], r8  ; x5  | 
+  mov dword [rbp-32], r9  ; x6  | OBS: los desplazamientos negativos son para variables locales
 
-	;epilogo
-	ret
+  ; x1 - x2
+  call restar_c 
+
+  ; (x1 - x2) + x3
+  mov EDI, EAX
+  mov ESI, dword [RBP - 8] ;leo x3 de la pila
+  call sumar_c
+
+  ; (...) - x4
+  mov EDI, EAX
+  mov ESI, dword [RBP - 16] ;leo x4 de la pila
+  call restar_c
+
+  ; (...) + x5 
+  mov EDI, EAX
+  mov ESI, dword [RBP - 24] ;leo x5 de la pila
+  call sumar_c
+
+  ; (...) - x6
+  mov EDI, EAX
+  mov ESI, dword [RBP - 32] ;leo x6 de la pila
+  call restar_c
+
+  ; (...) + x7
+  mov EDI, EAX
+  mov ESI, dword [RBP + 16] ;leo x7 de la pila
+  call sumar_c
+
+  ; (...) - x8
+  mov EDI, EAX
+  mov ESI, dword [RBP + 24] ;leo x8 de la pila
+  call restar_c
+
+  ;el resultado final ya está en EAX, así que no hay que hacer más nada
+
+  ;epilogo
+  add RSP, 32 ;restauro tope de pila
+  pop RBP ;pila desalineada, RBP restaurado, RSP apuntando a la dirección de retorno
+  ret
 
 
 ; SUGERENCIA: investigar uso de instrucciones para convertir enteros a floats y viceversa
