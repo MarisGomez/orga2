@@ -160,18 +160,36 @@ alternate_sum_8:
 
 ; SUGERENCIA: investigar uso de instrucciones para convertir enteros a floats y viceversa
 ;void product_2_f(uint32_t * destination, uint32_t x1, float f1);
-;registros: destination[?], x1[?], f1[?]
+;registros:
+; destination[RDI] 
+; x1[ESI]
+; f1[XMM0]
 product_2_f:
-	ret
+	cvtsi2ss xmm1, ESI ; xmm1 = x1 (float)
 
+  mulss xmm1, xmm0   ; xmm1 *= xmm0
+
+  cvtss2si EAX, xmm1 ; EAX = (uint32_t) resultado (trunca la parte decimal)
+
+  mov [rdi], EAX     ; destination* = eax
+
+  ret
 
 ;extern void product_9_f(double * destination
 ;, uint32_t x1, float f1, uint32_t x2, float f2, uint32_t x3, float f3, uint32_t x4, float f4
 ;, uint32_t x5, float f5, uint32_t x6, float f6, uint32_t x7, float f7, uint32_t x8, float f8
 ;, uint32_t x9, float f9);
-;registros y pila: destination[rdi], x1[?], f1[?], x2[?], f2[?], x3[?], f3[?], x4[?], f4[?]
-;	, x5[?], f5[?], x6[?], f6[?], x7[?], f7[?], x8[?], f8[?],
-;	, x9[?], f9[?]
+;registros y pila: 
+; destination[RDI]
+; x1[?]                    f1[?]
+; x2[?]                    f2[?]
+; x3[?]                    f3[?]
+; x4[?]                    f4[?]
+; x5[?]                    f5[?]
+; x6[?]                    f6[?]
+; x7[?]                    f7[?]
+; x8[?]                    f8[?]
+;	x9[?]                    f9[?]
 product_9_f:
 	;prologo
 	push rbp
