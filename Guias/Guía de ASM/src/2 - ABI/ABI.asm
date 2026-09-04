@@ -195,15 +195,54 @@ product_9_f:
 	push rbp
 	mov rbp, rsp
 
+  mov [rbp-8], rdx  ; x2
+  mov [rbp-16], rcx ; x3
+  mov [rbp-24], r8  ; x4
+  mov [rbp-32], r9  ; x5
+
 	;convertimos los flotantes de cada registro xmm en doubles
-	; COMPLETAR
+	cvtss2sd xmm0, xmm0 ; En esta instancia, todavía no convierto
+  cvtss2sd xmm1, xmm1 ; f9 a double, ya que no me quedan registros
+  cvtss2sd xmm2, xmm2 ; flotantes disponibles y la instrucción
+  cvtss2sd xmm3, xmm3 ; cvtss2sd me obliga a usar xmm como 
+  cvtss2sd xmm4, xmm4 ; registro destino.
+  cvtss2sd xmm5, xmm5 ;
+  cvtss2sd xmm6, xmm6 ;
+  cvtss2sd xmm7, xmm7 ;
 
 	;multiplicamos los doubles en xmm0 <- xmm0 * xmm1, xmmo * xmm2 , ...
-	; COMPLETAR
+	mulsd xmm0, xmm1
+  mulsd xmm0, xmm2
+  mulsd xmm0, xmm3
+  mulsd xmm0, xmm4
+  mulsd xmm0, xmm5
+  mulsd xmm0, xmm6
+  mulsd xmm0, xmm7
+  cvtss2sd xmm1, [RBP+48] ; Convierto f9 a double en xmm1 ya que fue utilizado.
+  mulsd xmm0, xmm1
 
 	; convertimos los enteros en doubles y los multiplicamos por xmm0.
-	; COMPLETAR
+	cvtsi2sd xmm1, ESI
+  cvtsi2sd xmm2, dword [rbp-8]  ; x2
+  cvtsi2sd xmm3, dword [rbp-16] ; x3
+  cvtsi2sd xmm4, dword [rbp-24] ; x4
+  cvtsi2sd xmm5, dword [rbp-32] ; x5
+  cvtsi2sd xmm6, dword [rbp+16] ; x6
+  cvtsi2sd xmm7, dword [rbp+24] ; x7 | Me detengo acá por el mismo motivo que antes.
 
+  mulsd xmm0, xmm1
+  mulsd xmm0, xmm2
+  mulsd xmm0, xmm3
+  mulsd xmm0, xmm4
+  mulsd xmm0, xmm5
+  mulsd xmm0, xmm6
+  mulsd xmm0, xmm7
+  cvtss2sd xmm1, dword [RBP+32] ; x8
+  cvtss2sd xmm2, dword [RBP+40] ; x9
+  mulsd xmm0, xmm1
+  mulsd xmm0, xmm2
+
+  movsd [rdi], xmm0 ; destination* = xmm0
 	; epilogo
 	pop rbp
 	ret
