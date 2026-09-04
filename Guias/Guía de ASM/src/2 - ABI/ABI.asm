@@ -194,6 +194,7 @@ product_9_f:
 	;prologo
 	push rbp
 	mov rbp, rsp
+  sub rsp, 32
 
   mov [rbp-8], rdx  ; x2
   mov [rbp-16], rcx ; x3
@@ -237,13 +238,14 @@ product_9_f:
   mulsd xmm0, xmm5
   mulsd xmm0, xmm6
   mulsd xmm0, xmm7
-  cvtss2sd xmm1, dword [RBP+32] ; x8
-  cvtss2sd xmm2, dword [RBP+40] ; x9
+  cvtsi2sd xmm1, dword [RBP+32] ; x8
+  cvtsi2sd xmm2, dword [RBP+40] ; x9
   mulsd xmm0, xmm1
   mulsd xmm0, xmm2
 
   movsd [rdi], xmm0 ; destination* = xmm0
 	; epilogo
+  add rsp, 32
 	pop rbp
 	ret
 
