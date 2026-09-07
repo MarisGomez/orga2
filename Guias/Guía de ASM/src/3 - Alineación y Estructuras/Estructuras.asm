@@ -2,20 +2,20 @@
 
 ;########### ESTOS SON LOS OFFSETS Y TAMAÑO DE LOS STRUCTS
 ; Completar las definiciones (serán revisadas por ABI enforcer):
-NODO_OFFSET_NEXT 0
-NODO_OFFSET_CATEGORIA 8
-NODO_OFFSET_ARREGLO 16
-NODO_OFFSET_LONGITUD 24
-NODO_SIZE 32
-PACKED_NODO_OFFSET_NEXT 0
-PACKED_NODO_OFFSET_CATEGORIA 8
-PACKED_NODO_OFFSET_ARREGLO 9
-PACKED_NODO_OFFSET_LONGITUD 17
-PACKED_NODO_SIZE 20
-LISTA_OFFSET_HEAD 0
-LISTA_SIZE 8
-PACKED_LISTA_OFFSET_HEAD 0
-PACKED_LISTA_SIZE 8
+%define NODO_OFFSET_NEXT 0
+%define NODO_OFFSET_CATEGORIA 8
+%define NODO_OFFSET_ARREGLO 16
+%define NODO_OFFSET_LONGITUD 24
+%define NODO_SIZE 32
+%define PACKED_NODO_OFFSET_NEXT 0
+%define PACKED_NODO_OFFSET_CATEGORIA 8
+%define PACKED_NODO_OFFSET_ARREGLO 9
+%define PACKED_NODO_OFFSET_LONGITUD 17
+%define PACKED_NODO_SIZE 20
+%define LISTA_OFFSET_HEAD 0
+%define LISTA_SIZE 8
+%define PACKED_LISTA_OFFSET_HEAD 0
+%define PACKED_LISTA_SIZE 8
 
 ;########### SECCION DE DATOS
 section .data
@@ -36,27 +36,43 @@ cantidad_total_de_elementos:
 	mov RBP, RSP
 
 	;tengo en RDI un puntero al comienzo de un array
-	;y en RSI el tamaño del array
-	;asumimos que al menos hay un elemento en el array
-	
-	XOR R8, R8; usamos R8 como índice del array
+	xor eax, eax  ; acumulador = 0
+    mov rdi, [rdi + LISTA_OFFSET_HEAD] ; rdi = lista->head
 
-	.ciclo:
-		mov RDX, [RDI + R8 * NODO_SIZE + NODO_OFFSET_NEXT]
-		mov CL, BYTE [RDI + R8 * NODO_SIZE + NODO_OFFSET_CATEGORIA]
-		mov R9, [RDI + R8 * NODO_SIZE + NODO_OFFSET_ARREGLO]
-		mov [RBP+16], DWORD [RDI + R8 * NODO_SIZE + NODO_OFFSET_LONGITUD]
+.ciclo:
+	test rdi, rdi  ; ¿es NULL?
+    je .fin ;Jump if equal
 
-		INC R8; avanzo el índice del array
-		CMP R8, RSI
-		JL .ciclo
+    add eax, [rdi + NODO_OFFSET_LONGITUD] ; acumular longitud
+    mov rdi, [rdi + NODO_OFFSET_NEXT]     ; avanzar al siguiente nodo
+    jmp .ciclo
 
+.fin:
 	;epílogo
-	pop RBP
-	ret
+    pop rbp
+    ret
 
 ;extern uint32_t cantidad_total_de_elementos_packed(packed_lista_t* lista);
 ;registros: lista[?]
 cantidad_total_de_elementos_packed:
-	ret
+	;prólogo 
+	push RBP
+	mov RBP, RSP
+
+	;tengo en RDI un puntero al comienzo de un array
+	xor eax, eax  ; acumulador = 0
+    mov rdi, [rdi + PACKED_LISTA_OFFSET_HEAD] ; rdi = lista->head
+
+.ciclo:
+	test rdi, rdi  ; ¿es NULL?
+    je .fin ;Jump if equal
+
+    add eax, [rdi + PACKED_NODO_OFFSET_LONGITUD] ; acumular longitud
+    mov rdi, [rdi + PACKED_NODO_OFFSET_NEXT]     ; avanzar al siguiente nodo
+    jmp .ciclo
+
+.fin:
+	;epílogo
+    pop rbp
+    ret
 
