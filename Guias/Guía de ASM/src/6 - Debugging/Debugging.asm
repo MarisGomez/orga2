@@ -11,9 +11,9 @@ FALSE EQU 0
 ; Marca un ejercicio como hecho
 TRUE  EQU 1
 
-ITEM_OFFSET_NOMBRE EQU 9
-ITEM_OFFSET_ID EQU 16
-ITEM_OFFSET_CANTIDAD EQU 24
+ITEM_OFFSET_NOMBRE EQU 0
+ITEM_OFFSET_ID EQU 12
+ITEM_OFFSET_CANTIDAD EQU 16
 
 POINTER_SIZE EQU 4
 UINT32_SIZE EQU 8
@@ -21,10 +21,10 @@ UINT32_SIZE EQU 8
 ; Marcar el ejercicio como hecho (`true`) o pendiente (`false`).
 
 global EJERCICIO_1_HECHO
-EJERCICIO_1_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
+EJERCICIO_1_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 
 global EJERCICIO_2_HECHO
-EJERCICIO_2_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
+EJERCICIO_2_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 
 global EJERCICIO_3_HECHO
 EJERCICIO_3_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
@@ -33,19 +33,34 @@ global EJERCICIO_4_HECHO
 EJERCICIO_4_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
 
 global ejercicio1
+; uint64_t ejercicio1(uint64_t sum1, uint64_t sum2, uint64_t sum3, uint64_t sum4, uint64_t sum5);
+; sum1 [RDI]
+; sum2 [RSI]
+; sum3 [RDX]
+; sum4 [RCX]
+; sum5 [R8]
 ejercicio1:
-	add edi, ecx
-	add edi, edx
-    add edi, ebx
-    add edi, r9d
-	mov eax, edi
+	add rdi, rsi  ; Paso 1: Paso todos los registros de 32 bits a registros de 64 bits
+	add rdi, rdx  ; Paso 2: Paso los argumentos en orden y por convención de llamadas
+    add rdi, rcx
+    add rdi, r8
+	mov rax, rdi
 	ret
 
+
 global ejercicio2
+; void ejercicio2(item_t* un_item, uint32_t id, uint32_t cantidad, char nombre[]);
+; un_item [RDI] PUNTERO
+; id [RSI]
+; cantidad [RDX]
+; nombre[] [RCX]
 ejercicio2:
-	mov [rdi+ITEM_OFFSET_ID], rsi
-	mov [rdi+ITEM_OFFSET_CANTIDAD], rdx
-	call strcpy 
+	mov [rdi+ITEM_OFFSET_ID], esi ; 4 bytes
+	mov [rdi+ITEM_OFFSET_CANTIDAD], edx ; 4 bytes
+
+	mov rsi, rcx ; movemos nombre[] a rsi
+	call strcpy ; strcpy espera al operando destino en rdi y al operando fuente en rsi, lo devuelve en rax
+	mov [rdi+ITEM_OFFSET_NOMBRE], rdi
 	ret
 
 
