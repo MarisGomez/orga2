@@ -57,10 +57,12 @@ global ejercicio2
 ejercicio2:
 	mov [rdi+ITEM_OFFSET_ID], esi ; 4 bytes
 	mov [rdi+ITEM_OFFSET_CANTIDAD], edx ; 4 bytes
+	sub rsp, 8 ; Antes de ejecutar un call, la pila debe estar alineada (strcpy usa la pila)
 
 	mov rsi, rcx ; movemos nombre[] a rsi
-	call strcpy ; strcpy espera al operando destino en rdi y al operando fuente en rsi, lo devuelve en rax
-	mov [rdi+ITEM_OFFSET_NOMBRE], rdi
+	call strcpy ; strcpy espera al operando destino en rdi y al operando fuente en rsi
+
+	add rsp, 8
 	ret
 
 
