@@ -30,7 +30,7 @@ global EJERCICIO_3_HECHO
 EJERCICIO_3_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 
 global EJERCICIO_4_HECHO
-EJERCICIO_4_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
+EJERCICIO_4_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 
 
 ; uint64_t ejercicio1(uint64_t sum1, uint64_t sum2, uint64_t sum3, uint64_t sum4, uint64_t sum5);
@@ -80,13 +80,16 @@ ejercicio3:
 	push r12
 	push r13
 	push r14
+	push r15
+	sub rsp, 8
 
 	mov rbx, rdi ; array[rcx] -> puntero del array
 	mov r14, rdx ; fun[r14] -> puntero de la funcion
-	mov r12, 64 ; r12 = resultado parcial
+	mov r15, rsi ; size[r14]
+	xor r12, r12 ; r12 = resultado parcial
 
-	test rsi, rsi ; caso n = 0
-	je .end
+	test r15, r15 ; caso n = 0
+	je .vacio
 
 	xor r13, r13 ; i = 0
 
@@ -96,16 +99,22 @@ ejercicio3:
 
 	; fun_ej_3 espera a "a" en RDI y a "b" en RSI, devuelve en RAX
 	call r14 ; llama a fun_ej_3
-
 	add r12, rax ; resultado parcial += rax
 
 	inc r13 
-	cmp r13, rsi
+	cmp r13, r15
 	jb .loop ; jump if r13 < rsi
 
-	.end:
 	mov rax, r12
+	jmp .end
+
+	.vacio:
+	mov rax, 64
+
+	.end:
 	;epílogo
+	add rsp, 8
+	pop r15
 	pop r14
     pop r13
     pop r12
