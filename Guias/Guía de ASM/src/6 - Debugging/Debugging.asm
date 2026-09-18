@@ -27,18 +27,19 @@ global EJERCICIO_2_HECHO
 EJERCICIO_2_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 
 global EJERCICIO_3_HECHO
-EJERCICIO_3_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
+EJERCICIO_3_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 
 global EJERCICIO_4_HECHO
 EJERCICIO_4_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
 
-global ejercicio1
+
 ; uint64_t ejercicio1(uint64_t sum1, uint64_t sum2, uint64_t sum3, uint64_t sum4, uint64_t sum5);
 ; sum1 [RDI]
 ; sum2 [RSI]
 ; sum3 [RDX]
 ; sum4 [RCX]
 ; sum5 [R8]
+global ejercicio1
 ejercicio1:
 	add rdi, rsi  ; Paso 1: Paso todos los registros de 32 bits a registros de 64 bits
 	add rdi, rdx  ; Paso 2: Paso los argumentos en orden y por convención de llamadas
@@ -48,12 +49,12 @@ ejercicio1:
 	ret
 
 
-global ejercicio2
 ; void ejercicio2(item_t* un_item, uint32_t id, uint32_t cantidad, char nombre[]);
 ; un_item [RDI] PUNTERO
 ; id [RSI]
 ; cantidad [RDX]
 ; nombre[] [RCX]
+global ejercicio2
 ejercicio2:
 	mov [rdi+ITEM_OFFSET_ID], esi ; 4 bytes
 	mov [rdi+ITEM_OFFSET_CANTIDAD], edx ; 4 bytes
@@ -66,34 +67,50 @@ ejercicio2:
 	ret
 
 
+; uint32_t ejercicio3(uint32_t* array, uint32_t size, uint32_t (*fun_ej_3)(uint32_t a, uint32_t b));
+; arrray [RDI] -> puntero
+; size [RSI]
+; fun [RDX] -> puntero
 global ejercicio3
 ejercicio3:
-	cmp rsi, 0
-	je .vacio
-	
-	mov rcx, rdi ; array
-	mov r8, 0 ; sumatoria
-	mov r9, 0 ; i
+	;prólogo 
+	push rbp
+	mov rbp, rsp
+    push rbx
+	push r12
+	push r13
+	push r14
 
-	.loop:
-	mov rdi, r8
-	mov rsi, [rcx + r9*4]
+	mov rbx, rdi ; array[rcx] -> puntero del array
+	mov r14, rdx ; fun[r14] -> puntero de la funcion
+	mov r12, 64 ; r12 = resultado parcial
 
-	call rdx
-
-	add r8, rax
-	mov rax, r8
-
-	inc r9
-	cmp r9, rsi
+	test rsi, rsi ; caso n = 0
 	je .end
 
-	jmp .loop
+	xor r13, r13 ; i = 0
 
-	.vacio:
-	mov rax, 64
+	.loop:
+	mov rdi, r12 ; rdi = resultado parcial
+	mov esi, dword [rbx + r13*4] ; array[i] -> uint32_t de 4 bytes
+
+	; fun_ej_3 espera a "a" en RDI y a "b" en RSI, devuelve en RAX
+	call r14 ; llama a fun_ej_3
+
+	add r12, rax ; resultado parcial += rax
+
+	inc r13 
+	cmp r13, rsi
+	jb .loop ; jump if r13 < rsi
 
 	.end:
+	mov rax, r12
+	;epílogo
+	pop r14
+    pop r13
+    pop r12
+	pop rbx
+	pop rbp
 	ret
 
 global ejercicio4
