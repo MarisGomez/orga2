@@ -15,7 +15,7 @@ ITEM_OFFSET_NOMBRE EQU 0
 ITEM_OFFSET_ID EQU 12
 ITEM_OFFSET_CANTIDAD EQU 16
 
-POINTER_SIZE EQU 4
+POINTER_SIZE EQU 8
 UINT32_SIZE EQU 4
 
 ; Marcar el ejercicio como hecho (`true`) o pendiente (`false`).
@@ -162,6 +162,7 @@ ejercicio4:
 	
 	mov rdi, r8 
 	call free
+	mov qword[r12+rbx*POINTER_SIZE], 0 ; arr[i] = NULL
 
 	inc rbx
 	cmp rbx, r13 ; cuando i = size termina el loop
