@@ -194,7 +194,7 @@ void test_ej1a(void) {
 
 /**
  * Evalúa los tests del ejercicio 1B. Este ejercicio requiere implementar
- * `es_indice_ordenado`.
+ * `indice_a_inventario`.
  *
  * En caso de que se quieran skipear los tests alcanza con asignarle `false`
  * a `EJERCICIO_1B_HECHO`.
@@ -202,7 +202,7 @@ void test_ej1a(void) {
 void test_ej1b(void) {
 	uint64_t failed_at_start = failed_tests;
 	if (!EJERCICIO_1B_HECHO) {
-		printf(SKIP "El ejercicio 1A no está hecho aún.\n");
+		printf(SKIP "El ejercicio 1B no está hecho aún.\n");
 		return;
 	}
 
