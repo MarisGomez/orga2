@@ -16,7 +16,7 @@ ITEM_OFFSET_ID EQU 12
 ITEM_OFFSET_CANTIDAD EQU 16
 
 POINTER_SIZE EQU 4
-UINT32_SIZE EQU 8
+UINT32_SIZE EQU 4
 
 ; Marcar el ejercicio como hecho (`true`) o pendiente (`false`).
 
@@ -122,38 +122,61 @@ ejercicio3:
 	pop rbp
 	ret
 
+
+; uint32_t* ejercicio4(uint32_t** array, uint32_t size, uint32_t constante);
+; array[RDI]
+; size[RSI]
+; constante[RDX]
 global ejercicio4
 ejercicio4:
-	mov r12, rdi
-	mov r13, rsi
-	mov r14, rdx
+	; prólogo:
+	push rbp
+	mov rbp, rsp
+	push r12
+	push r13
+	push r14
+	push r15
+	push rbx
+	sub rsp, 8
 
-	xor rdi, rdi
-	mov eax, UINT32_SIZE
-	mul esi
-	mov edi, eax
+	mov r12, rdi ; array[r12]
+	mov r13, rsi ; size[r13]
+	mov r14, rdx ; constante[r14]
+
+	xor rdi, rdi ; rdi = 0
+	mov eax, UINT32_SIZE ; mul espera al otro operando en rax
+	mul esi ; size * 4
+	mov edi, eax ; malloc espera al argumento en rdi
 
 	call malloc
-	mov r15, rax
-	
-	xor rbx, rbx
-	.loop:
-	
-	cmp rbx, r13
-	je .end
 
-	mov r8, [r12+rbx*POINTER_SIZE]
+	mov r15, rax ; res_arr[r15]
+	xor rbx, rbx ; i = 0
+
+	.loop:
+	mov r8, [r12+rbx*POINTER_SIZE] ; arr[i]
 	mov r9d, [r8]
 	mov rax, r14
-	mul r9d
-	mov [r15+rbx*UINT32_SIZE], eax
+	mul r9d ; arr[i] * constante
+	mov [r15+rbx*UINT32_SIZE], eax ; res_arr[i] = arr[i] * constante
 	
-	mov rsi, r8 
+	mov rdi, r8 
 	call free
 
 	inc rbx
+	cmp rbx, r13 ; cuando i = size termina el loop
+	je .end
 	jmp .loop
 
 	.end:
-	mov rax, r15
+	mov rax, r15 ;devuelvo res_arr en rax
+
+	;epílogo:
+	add rsp, 8
+	pop rbx
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbp
 	ret
