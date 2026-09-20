@@ -21,7 +21,7 @@ EJERCICIO_1A_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 ; Funciones a implementar:
 ;   - indice_a_inventario
 global EJERCICIO_1B_HECHO
-EJERCICIO_1B_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
+EJERCICIO_1B_HECHO: db TRUE ; Cambiar por `TRUE` para correr los tests.
 
 ;########### ESTOS SON LOS OFFSETS Y TAMAÑO DE LOS STRUCTS
 ; Completar las definiciones (serán revisadas por ABI enforcer):
@@ -47,18 +47,42 @@ es_indice_ordenado:
 	push r14
 	push r15
 	push rbx
+	sub rsp, 8
 
-	mov r12, rdi ; item_t**     inventario [R12]
-	mov r13, rsi ; uint16_t*    indice     [R13]
-	mov r14w, dx ; uint16_t     tamanio    [R14]
-	mov r15, rcx ; comparador_t comparador [R15]
+	mov r12, rdi  ; item_t**     inventario [R12]
+	mov r13, rsi  ; uint16_t*    indice     [R13]
+	movzx r14, dx ; uint16_t     tamanio    [R14]
+	mov r15, rcx  ; comparador_t comparador [R15]
 
-	xor rbx, rbx; inicializo un bool en r12 con 0 (false)
+	mov eax, 1 ; inicializo res en eax con true
+	xor rbx, rbx ; i = 0
 
+	cmp r14, 1 ; si el tamaño es 1 no hay loop
+	je .fin
+
+	dec r14 ; tamanio - 1
 	.ciclo:
+	cmp rbx, r14
+	je .fin
 
+	movzx r8, word [r13 + rbx * 2]     ; r8 = indice[i]
+	movzx r9, word [r13 + rbx * 2 + 2] ; r9 = indice[i+1]
+	mov rdi, [r12 + r8*8] ; rdi = item_actual
+	mov rsi, [r12 + r9*8] ; rsi = item_siguiente
+	call r15 ; funcion comparador
 
+	test al, al
+	je .false
+
+	inc rbx
+	jmp .ciclo
+
+	.false:
+	xor eax, eax
+
+	.fin:
 	; epílogo:
+	add rsp, 8
 	pop rbx
 	pop r15
 	pop r14
@@ -67,33 +91,56 @@ es_indice_ordenado:
 	pop rbp
 	ret
 
-;; Dado un inventario y una vista, crear un nuevo inventario que mantenga el
-;; orden descrito por la misma.
-
-;; La memoria a solicitar para el nuevo inventario debe poder ser liberada
-;; utilizando `free(ptr)`.
 
 ;; item_t** indice_a_inventario(item_t** inventario, uint16_t* indice, uint16_t tamanio);
-
-;; Donde:
-;; - `inventario` un array de punteros a ítems que representa el inventario a
-;;   procesar.
-;; - `indice` es el arreglo de índices en el inventario que representa la vista
-;;   que vamos a usar para reorganizar el inventario.
-;; - `tamanio` es el tamaño del inventario.
-;; 
-;; Tenga en consideración:
-;; - Tanto los elementos de `inventario` como los del resultado son punteros a
-;;   `ítems`. Se pide *copiar* estos punteros, **no se deben crear ni clonar
-;;   ítems**
-
+; item_t**  inventario [RDI]
+; uint16_t* indice     [RSI]
+; uint16_t  tamanio    [RDX]
 global indice_a_inventario
 indice_a_inventario:
-	; Te recomendamos llenar una tablita acá con cada parámetro y su
-	; ubicación según la convención de llamada. Prestá atención a qué
-	; valores son de 64 bits y qué valores son de 32 bits o 8 bits.
-	;
-	; r/m64 = item_t**  inventario
-	; r/m64 = uint16_t* indice
-	; r/m16 = uint16_t  tamanio
+	; prólogo:
+	push rbp
+	mov rbp, rsp
+	push r12
+	push r13
+	push r14
+	push r15
+	push rbx
+	sub rsp, 8
+
+	mov r12, rdi  ; item_t**     inventario [R12]
+	mov r13, rsi  ; uint16_t*    indice     [R13]
+	movzx r14, dx ; uint16_t     tamanio    [R14]
+
+	; PEDIMOS MEMORIA PARA resultado**
+	mov rax, 8
+	imul rax, r14 ; rax = tamanio * 8
+	mov rdi, rax 
+    call malloc
+
+	mov r15, rax ; r15 = resultado**
+	xor rbx, rbx ; i = 0
+
+	.ciclo:
+	cmp rbx, r14
+	je .fin
+
+	movzx r8, word [r13 + rbx * 2] ; r8 = indice[i]
+	mov rax, [r12 + r8*8] ; rax = inventario[indice[i]]
+	mov [r15 + rbx*8], rax ; resultado[i] = rax
+
+	inc rbx
+	jmp .ciclo
+
+	.fin:
+	mov rax, r15
+
+	; epílogo:
+	add rsp, 8
+	pop rbx
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbp
 	ret
