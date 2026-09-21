@@ -32,10 +32,10 @@ EJERCICIO_2C_HECHO: db FALSE ; Cambiar por `TRUE` para correr los tests.
 
 ;########### ESTOS SON LOS OFFSETS Y TAMAÑO DE LOS STRUCTS
 ; Completar las definiciones (serán revisadas por ABI enforcer):
-ATTACKUNIT_CLASE EQU ??
-ATTACKUNIT_COMBUSTIBLE EQU ??
-ATTACKUNIT_REFERENCES EQU ??
-ATTACKUNIT_SIZE EQU ??
+ATTACKUNIT_CLASE EQU 0
+ATTACKUNIT_COMBUSTIBLE EQU 12 ; padding de 1 byte
+ATTACKUNIT_REFERENCES EQU 14
+ATTACKUNIT_SIZE EQU 16 ; padding de 1 byte
 
 global optimizar
 optimizar:
