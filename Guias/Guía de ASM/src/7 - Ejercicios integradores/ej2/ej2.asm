@@ -44,45 +44,53 @@ ATTACKUNIT_SIZE EQU 16 ; padding de 1 byte
 global optimizar
 optimizar:
 	push rbp
-	mov rbp, rsp
 	push r12
 	push r13
 	push r14
 	push r15
 	push rbx
-	sub rsp, 8
+	sub rsp, 8 ; mantengo alineacion
 	
 	mov r12, rdi ; mapa[r12]
 	mov r13, rsi ; compartida[r13]
 	mov r14, rdx ; fun_hash[r14]
 
 	xor r15, r15 ; i = 0
-	xor rbx, rbx ; j = 0
 
 	.ciclo_filas:
 	cmp r15, 255
-	je .fin
+	jae .fin ; jump it above or equal (salir cuando i >= 255)
+	xor rbx, rbx ; j = 0
 		.ciclo_columnas:
 		cmp rbx, 255
-		je .ciclo_filas
+		jae .siguiente_fila
 
-		mov r9, [r12 + r15 * 8] ; r9 = mapa[i]
-		mov r8, [r9 + rbx * 8] ; r8 = mapa[i][j]
+		; mapa[i][j] = mapa + i*255*8 + j*8 = mapa + i*2040 + j*8
+		mov r9, r15
+		imul r9, 2040 ; i*2040
+		add r9, r12 ; mapa + i*2040
+		mov r8, [r9 + rbx * 8] ; r8 = mapa + i*2040 + j*8
 		; PRIMER IF:
 		test r8, r8   ;; Caso unidad == NULL
 		je .continue  ;; ||
 		cmp r8, r13   ;; Caso unidad == compartida
 		je .continue  ;;
+
 		; SEGUNDO IF:
 		mov rdi, r8 ; fun_hash espera a la unidad en rdi
 		call r14
-		mov rdx, rax ; fun_hash(unidad)[RDX]
+		mov ebp, eax ; fun_hash(unidad) preservado en rbp (callee-saved)
 
 		mov rdi, r13 ; fun_hash espera a compartida en rdi
-		call r14
-		mov rcx, rax ; fun_hash(compartida)[RCX]
+		call r14 ; fun_hash(compartida)[EAX]
 
-		cmp rdx, rcx
+		; los calls destruyen r8 y r9, los recalculo
+		mov r9, r15
+		imul r9, r9, 2040
+		add r9, r12
+		mov r8, [r9 + rbx * 8]
+
+		cmp eax, ebp
 		jne .continue
 
 		dec byte [r8 + ATTACKUNIT_REFERENCES] ; unidad->references --
@@ -90,23 +98,30 @@ optimizar:
 		cmp byte [r8 + ATTACKUNIT_REFERENCES], 0 
 		jne .notfree
 
-		.free:
 		mov rdi, r8
 		call free
+		; free destruye r8 y r9, recargo la direccion de la celda
+		mov r9, r15
+		imul r9, r9, 2040
+		add r9, r12
 
 		.notfree:
-		mov r8, r13
+		; mapa [i][j] = compartida
+		mov [r9 + rbx * 8], r13
+
 		inc byte [r13 + ATTACKUNIT_REFERENCES]
 
 		.continue:
 		inc rbx
 		jmp .ciclo_columnas
-	
-	inc r15
-	jmp .ciclo_filas
+
+		.siguiente_fila:
+		inc r15
+		jmp .ciclo_filas
 
 	.fin:
 	add rsp, 8
+	pop rbx
 	pop r15
 	pop r14
 	pop r13
