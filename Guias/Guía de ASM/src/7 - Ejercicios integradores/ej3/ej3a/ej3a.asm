@@ -1,3 +1,4 @@
+extern malloc
 ;########### SECCION DE DATOS
 section .data
 
@@ -53,15 +54,19 @@ xor rbx, rbx ; contador = 0
     cmp r15, r13
     jae .fin
 
-    mov r8, [r12 + r15 * CASO_SIZE + CASO_USUARIO_OFFSET] ; r8 = caso.usuario
+    imul rdx, r15, CASO_SIZE ; rdx = i * CASO_SIZE
+    mov r8, [r12 + rdx + CASO_USUARIO_OFFSET] ; r8 = caso.usuario
 
     ; if (caso.usuario->nivel == nivel)
     mov ecx, dword [r8 + USUARIO_NIVEL_OFFSET] ; exc = caso.usuario->nivel
 
     cmp ecx, r14d
-    jne .ciclo ; si no son el mismo nivel seguimos iterando
+    jne .sigue ; si no son el mismo nivel seguimos iterando
 
     inc rbx ; contador += 1
+
+.sigue:
+    inc r15 ; i++
     jmp .ciclo
 
 .fin:
@@ -99,21 +104,21 @@ mov rdi, r12
 mov rsi, r13
 xor rdx, rdx ; rdx = 0
 call contar_casos_por_nivel
-movzx r14, eax ; contador0
+mov r14d, eax ; contador0
 
 ; contador1
 mov rdi, r12
 mov rsi, r13
 mov rdx, 1 ; rdx = 1
 call contar_casos_por_nivel
-movzx r15, eax ; contador1
+mov r15d, eax ; contador1
 
 ; contador2
 mov rdi, r12
 mov rsi, r13
 mov rdx, 2 ; rdx = 2
 call contar_casos_por_nivel
-movzx rbx, eax ; contador2
+mov ebx, eax ; contador2
 
 ; defino segmento
 mov rdi, SEGMENTACION_SIZE
@@ -121,61 +126,95 @@ call malloc
 mov rbp, rax ; rbp = segmento
 
 ; DEFINO LOS CASOS POR NIVEL
-; casos_nivel_0
-test r14, r14
-je .null0
+.casos_nivel_0:
+    test r14, r14
+    je .null0
 
-imul rdi, r14, CASO_SIZE ; contador0 * sizeof(caso_t)
-call malloc
-mov [rbp + casos_nivel_0], rax
+    imul rdi, r14, CASO_SIZE ; contador0 * sizeof(caso_t)
+    call malloc
+    mov [rbp + SEGMENTACION_CASOS0_OFFSET], rax
+    jmp .casos_nivel_1
 
-.null0:
-mov [rbp + casos_nivel_0], 0
+    .null0:
+    mov qword [rbp + SEGMENTACION_CASOS0_OFFSET], 0
 
-; casos_nivel_1
-test r15, r15
-je .null1
+.casos_nivel_1:
+    test r15, r15
+    je .null1
 
-imul rdi, r15, CASO_SIZE ; contador1 * sizeof(caso_t)
-call malloc
-mov [rbp + casos_nivel_1], rax
+    imul rdi, r15, CASO_SIZE ; contador1 * sizeof(caso_t)
+    call malloc
+    mov [rbp + SEGMENTACION_CASOS1_OFFSET], rax
+    jmp .casos_nivel_2
 
-.null1:
-mov [rbp + casos_nivel_1], 0
+    .null1:
+    mov qword [rbp + SEGMENTACION_CASOS1_OFFSET], 0
 
-; casos_nivel_2
-test rbx, rbx
-je .null2
+.casos_nivel_2:
+    test rbx, rbx
+    je .null2
 
-imul rdi, rbx, CASO_SIZE ; contador2 * sizeof(caso_t)
-call malloc
-mov [rbp + casos_nivel_2], rax
+    imul rdi, rbx, CASO_SIZE ; contador2 * sizeof(caso_t)
+    call malloc
+    mov [rbp + SEGMENTACION_CASOS2_OFFSET], rax
+    jmp .continue
 
-.null2:
-mov [rbp + casos_nivel_2], 0
+    .null2:
+    mov qword [rbp + SEGMENTACION_CASOS2_OFFSET], 0
 
+.continue:
+    xor r8, r8 ; i = 0
+    xor r9, r9 ; t0 = 0
+    xor r10, r10 ; t1 = 0
+    xor r11, r11 ; t2 = 0
 
-xor r8, r8 ; i = 0
-xor r9, r9 ; t0 = 0
-xor r10, r10 ; t1 = 0
-xor r11, r11 ; t2 = 0
 .ciclo:
-    cmp r8, r8
+    cmp r8, r13
     jae .fin
 
-    mov rdx, [r12 + r8 * CASO_SIZE + CASO_USUARIO_OFFSET] ; rdx = caso.usuario
-    mov ecx, dword [rdx + USUARIO_NIVEL_OFFSET] ; exc = caso.usuario->nivel
+    imul rcx, r8, CASO_SIZE ; rcx = i * CASO_SIZE
 
-    cmp ecx, 0 ; caso.usuario->nivel == 0
+    mov rdx, [r12 + rcx + CASO_USUARIO_OFFSET] ; rdx = caso.usuario
+    mov eax, [rdx + USUARIO_NIVEL_OFFSET]      ; eax = caso.usuario->nivel
+
+    cmp eax, 0 ; caso.usuario->nivel == 0
     je .caso0
+    cmp eax, 1 ; caso.usuario->nivel == 1
+    je .caso1
+    jmp .caso2 ; dominio: sobra nivel 2
 
-    .caso0:
+.caso0:
+    mov rdi, [rbp + SEGMENTACION_CASOS0_OFFSET] ; base del array nivel 0
+    imul rdx, r9, CASO_SIZE                     ; rdx = t0 * CASO_SIZE
+    mov rax, [r12 + rcx]                        ; primer qword del caso
+    mov rsi, [r12 + rcx + 8]                    ; segundo qword del caso
+    mov [rdi + rdx], rax
+    mov [rdi + rdx + 8], rsi
     inc r9
-    mov [rbp + casos_nivel_0 + r9], 
+    jmp .siguiente
 
-    jne .ciclo ; si no son el mismo nivel seguimos iterando
+.caso1:
+    mov rdi, [rbp + SEGMENTACION_CASOS1_OFFSET] ; base del array nivel 1
+    imul rdx, r10, CASO_SIZE                                 ; rdx = t1 * CASO_SIZE
+    mov rax, [r12 + rcx]                        ; primer qword del caso
+    mov rsi, [r12 + rcx + 8]                    ; segundo qword del caso
+    mov [rdi + rdx], rax
+    mov [rdi + rdx + 8], rsi
+    inc r10
+    jmp .siguiente
 
-    inc rbx ; contador += 1
+.caso2:
+    mov rdi, [rbp + SEGMENTACION_CASOS2_OFFSET] ; base del array nivel 2
+    imul rdx, r11, CASO_SIZE                                 ; rdx = t2 * CASO_SIZE
+    mov rax, [r12 + rcx]                        ; primer qword del caso
+    mov rsi, [r12 + rcx + 8]                    ; segundo qword del caso
+    mov [rdi + rdx], rax
+    mov [rdi + rdx + 8], rsi
+    inc r11
+    jmp .siguiente
+
+.siguiente:
+    inc r8
     jmp .ciclo
 
 .fin:
