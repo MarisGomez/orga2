@@ -36,7 +36,6 @@ USUARIO_SIZE EQU 56
 global eliminar_publicaciones_del_usuario
 eliminar_publicaciones_del_usuario:
 push rbp
-mov rbp, rsp
 push r12
 push r13
 push r14
@@ -48,9 +47,53 @@ mov r12, rdi ; feed       [R12]
 mov r13, rsi ; id_usuario [R13]
 
 mov r14, [r12 + FEED_FIRST_OFFSET] ; r14 = actual
-mov r15, 0                         ; r15 = previa
-mov rbx, 0                         ; rbx = encontramos_nuevo_first (bool)
+xor r15, r15                       ; r15 = previa
+xor rbx, rbx                       ; rbx = encontramos_nuevo_first (bool)
 
+.ciclo:
+    test r14, r14 ; actual != NULL
+    je .fin
+
+    mov rbp, [r14 + PUBLICACION_NEXT_OFFSET] ; rbp = siguiente
+
+    mov r8, [r14 + PUBLICACION_VALUE_OFFSET] ; r8 = actual->value
+    cmp dword [r8 + TUIT_ID_AUTOR_OFFSET], r13d ; actual->value->id_autor == id_usuario
+    jne .no_eliminar_publicacion
+    jmp .eliminar_publicacion
+
+    .no_eliminar_publicacion:
+        cmp rbx, 0
+        jne .nueva_previa
+
+        mov [r12 + FEED_FIRST_OFFSET], r14
+        mov rbx, 1
+        
+        .nueva_previa:
+            mov r15, r14
+            jmp .siguiente
+
+    .eliminar_publicacion:
+        cmp r15, 0
+        je .free
+
+        mov [r15 + PUBLICACION_NEXT_OFFSET], rbp
+
+    .free:
+        mov rdi, r14
+        call free
+        jmp .siguiente
+
+    .siguiente:
+    mov r14, rbp
+    jmp .ciclo
+
+.fin:
+cmp rbx, 0
+jne .epilogo
+
+mov qword [r12 + FEED_FIRST_OFFSET], qword 0
+
+.epilogo:
 add rsp, 8
 pop rbx
 pop r15
@@ -63,4 +106,35 @@ ret
 ; void bloquearUsuario(usuario_t *usuario, usuario_t *usuarioABloquear);
 global bloquearUsuario 
 bloquearUsuario:
-ret
+retbloquearUsuario:
+    .prologo:
+    push rbp
+    mov rbp, rsp
+    push r12
+    push r13    ; Stack alineado
+
+    ; Preservo los valores iniciales
+    mov r12, rdi    ; usuario
+    mov r13, rsi    ; usuarioABloquear
+
+    xor r8, r8
+    mov r8d, dword [r12 + USUARIO_CANT_BLOQUEADOS_OFFSET]   ; Cantidad de usuarios bloqueados
+    mov r9, [r12 + USUARIO_BLOQUEADOS_OFFSET] ; usuario->bloqueados
+    mov [r9 + r8 * 8], r13
+
+    inc dword [r12 + USUARIO_CANT_BLOQUEADOS_OFFSET]   ; usuario->cantBloqueados++
+
+    ; Solo nos queda llamar a la función auxiliar con el feed de cada usuario y el usuario a bloquar/bloqueador
+    mov rdi, [r12 + USUARIO_FEED_OFFSET]
+    mov rsi, [r13 + USUARIO_ID_OFFSET]
+    call eliminar_publicaciones_del_usuario
+
+    mov rdi, [r13 + USUARIO_FEED_OFFSET]
+    mov rsi, [r12 + USUARIO_ID_OFFSET]
+    call eliminar_publicaciones_del_usuario
+
+    .epilogo:
+    pop r13
+    pop r12
+    pop rbp
+    ret
