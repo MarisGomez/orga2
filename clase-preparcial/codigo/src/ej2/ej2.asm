@@ -51,7 +51,7 @@ xor r15, r15                       ; r15 = previa
 xor rbx, rbx                       ; rbx = encontramos_nuevo_first (bool)
 
 .ciclo:
-    test r14, r14 ; actual != NULL
+    cmp r14, 0 ; actual != NULL
     je .fin
 
     mov rbp, [r14 + PUBLICACION_NEXT_OFFSET] ; rbp = siguiente
