@@ -11,36 +11,36 @@ section .text
 ; ------------------------
 ; Contenido
 ; ------------------------
-CONT_NOMBRE_OFFSET      EQU 0        ; char nombre[64]
-CONT_VALOR_OFFSET       EQU 0       ; uint32_t valor
-CONT_COLOR_OFFSET       EQU 0       ; char color[32]
-CONT_ES_TESORO_OFFSET   EQU 0      ; bool es_tesoro
-CONT_PESO_OFFSET        EQU 0      ; float peso
-CONT_SIZE               EQU 0      ; sizeof(Contenido) (rounded)
+CONT_NOMBRE_OFFSET      EQU 0      ; char nombre[64]
+CONT_VALOR_OFFSET       EQU 64     ; uint32_t valor
+CONT_COLOR_OFFSET       EQU 68     ; char color[32]
+CONT_ES_TESORO_OFFSET   EQU 100    ; bool es_tesoro  (BOOL OCUPA 1 BYTE)
+CONT_PESO_OFFSET        EQU 104    ; float peso      (FLOAT OCUPA 4 BYTES)
+CONT_SIZE               EQU 108    ; sizeof(Contenido) (rounded)
 
 ; ------------------------
 ; Habitacion
 ; ------------------------
-HAB_ID_OFFSET          EQU 0         ; uint32_t id
-HAB_VECINOS_OFFSET     EQU 0        ; uint32_t vecinos[ACC_CANT]
-HAB_CONTENIDO_OFFSET   EQU 0        ; Contenido contenido
-HAB_VISITAS_OFFSET     EQU 0       ; uint32_t visitas
-HAB_SIZE               EQU 0       ; sizeof(Habitacion)
+HAB_ID_OFFSET          EQU 0        ; uint32_t id
+HAB_VECINOS_OFFSET     EQU 4        ; uint32_t vecinos[ACC_CANT] (4 * ACC_CANT = 4 * 4)
+HAB_CONTENIDO_OFFSET   EQU 20       ; Contenido contenido
+HAB_VISITAS_OFFSET     EQU 128      ; uint32_t visitas           
+HAB_SIZE               EQU 132      ; sizeof(Habitacion)
 
 ; ------------------------
 ; Mapa
 ; ------------------------
 MAP_HABITACIONES_OFFSET    EQU 0     ; Habitacion *habitaciones
-MAP_N_HABITACIONES_OFFSET  EQU 0     ; uint64_t n_habitaciones
-MAP_ID_ENTRADA_OFFSET      EQU 0    ; uint32_t id_entrada
-MAP_SIZE                   EQU 0    ; sizeof(Mapa)
+MAP_N_HABITACIONES_OFFSET  EQU 8     ; uint64_t n_habitaciones
+MAP_ID_ENTRADA_OFFSET      EQU 16    ; uint32_t id_entrada      PADDING DE 4 BYTES
+MAP_SIZE                   EQU 24    ; sizeof(Mapa)
 
 ; ------------------------
 ; Recorrido
 ; ------------------------
 REC_ACCIONES_OFFSET        EQU 0     ; Accion *acciones
-REC_CANT_ACCIONES_OFFSET   EQU 0     ; uint64_t cant_acciones
-REC_SIZE                  EQU 0     ; sizeof(Recorrido)
+REC_CANT_ACCIONES_OFFSET   EQU 8     ; uint64_t cant_acciones
+REC_SIZE                   EQU 16    ; sizeof(Recorrido)
 
 ; Notar que el enum aparece como puntero, entonces no afecta los offsets
 
