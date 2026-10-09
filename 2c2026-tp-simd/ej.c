@@ -8,29 +8,29 @@ const bool ej_2_hecho = true;
 const bool ej_3_hecho = true;
 const bool ej_4_hecho = true;
 
-void ej1_sample(size_t buf_len, int16_t buf[buf_len],
+void ej1_sample(size_t buf_len, int16_t buf[buf_len], // resolver de a 8 samples (8 words en simultaneo)
                 size_t freq_a_len, int16_t freq_a[freq_a_len], size_t a_start,
                 size_t freq_b_len, int16_t freq_b[freq_b_len], size_t b_start) {
 	for (size_t i = 0; i < buf_len; i++) {
-		size_t index_a = (i + a_start) % freq_a_len;
-		size_t index_b = (i + b_start) % freq_b_len;
+		size_t index_a = (i + a_start) % freq_a_len; // Reset cuando lleguemos al maximo en lugar que hacer modulo
+		size_t index_b = (i + b_start) % freq_b_len; // Ej: j = a_start -> j ++; if (j >= |a|) then (j = 0); (lo mismo ocurre con index_b)
 		int16_t sample_a = freq_a[index_a];
 		int16_t sample_b = freq_b[index_b];
 		buf[i] = (sample_a + sample_b) / 2;
 	}
 }
 
-float ej2_detect(size_t size, int16_t signal[size], sincos_t freq[size]) {
-	float re = 0;
-	float im = 0;
-	for (size_t i = 0; i < size; i++) {
-		re += signal[i] * freq[i].cos;
-		im += signal[i] * freq[i].sin;
-	}
-	return 2 * sqrtf(re*re + im*im) / size;
-}
+float ej2_detect(size_t size, int16_t signal[size], sincos_t freq[size]) { // Resolver de a 2 samples (2 words en simultaneo): 1) Dos partes reales y dos imaginarias
+	float re = 0;                                                          // | Sin [0] | Cos [0] | Sin [1] | Cos [1] |
+	float im = 0;                                                          // * | sig [0] | sig [0] | sig [1] | sig [1] |
+	for (size_t i = 0; i < size; i++) {                                    // + | re0 | im0 | re1 | im1 | -> Queda sumar re0 + re1 e im0 + im1
+		re += signal[i] * freq[i].cos;                                     // 2) Partes reales e imaginarias separadas
+		im += signal[i] * freq[i].sin;                                     // | Sin [0] | Sin [1] | Sin [2] | Cos [3] | (Esto se logra con un shuffle o blend)
+	}                                                                      // | Cos [0] | Cos [1] | Cos [2] | Cos [3] |
+	return 2 * sqrtf(re*re + im*im) / size;                                // * | sig [0] | sig [0] | sig [1] | sig [1] |
+}                                                                          // A realizar: conversiones 16 a 32, int a float, sumas horizonales
 
-void ej3_remove_duplicates(size_t size, char detected[size], char output[]) {
+void ej3_remove_duplicates(size_t size, char detected[size], char output[]) { // Mirar instrucción PTEST
 	int outi = 0;
 	char c = ' ';
 	for (int i = 0; i < size; i += 16) {

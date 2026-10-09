@@ -17,7 +17,7 @@ global ej_1_hecho
 global ej_2_hecho
 global ej_3_hecho
 global ej_4_hecho
-ej_1_hecho: db FALSE
+ej_1_hecho: db TRUE
 ej_2_hecho: db FALSE
 ej_3_hecho: db FALSE
 ej_4_hecho: db FALSE
@@ -38,32 +38,70 @@ global ej1_sample
 ;                 size_t freq_a_len, int16_t freq_a[freq_a_len], size_t a_start,
 ;                 size_t freq_b_len, int16_t freq_b[freq_b_len], size_t b_start);
 ;
-; buf_len:    Está en ??
-; buf:        Está en ??
-; freq_a_len: Está en ??
-; freq_a:     Está en ??
-; a_start:    Está en ??
-; freq_b_len: Está en ??
-; freq_b:     Está en ??
-; b_start:    Está en ??
+; buf_len:    Está en RDI
+; buf:        Está en RSI
+; freq_a_len: Está en RDX
+; freq_a:     Está en RCX
+; a_start:    Está en R8
+; freq_b_len: Está en R9
+; freq_b:     Está en [RBP+16]
+; b_start:    Está en [RBP+24]
 ;
 ; Tener en mente que:
 ; - buf_len, freq_a_len, freq_b_len, a_start y b_start son siempre múltiplos de 16
 ; - a_start < freq_a_len y b_start < freq_b_len
 ; - freq_a y freq_b están dados tal que sumarlos entre sí no causa overflow
 ej1_sample:
-	add rdi, rdi ; ahora mido en bytes en lugar de ítems
+	push rbp
+	mov rbp, rsp
+	push r12
+	push r13
+	push r14
+	push r15
 
-	xor r10, r10
+	mov r12, r8       ;; guardo los valores de a_start y b_start
+	mov r13, [RBP+24] ;;       para poder hacer reset
+	mov r15, [RBP+16] ; r15 = freq_b
+
+	add rdi, rdi ; ahora mido en bytes en lugar de ítems (2 bytes por c/int16_t)
+
+	xor r10, r10 ; i = 0
 	jmp .guarda
 	.loop:
-		pxor xmm0, xmm0
-		movdqu [rsi + r10], xmm0
+		cmp r12, rdx ; if (a_start >= |a|) then reset
+		jge .reset_a
+		cmp r13, r9  ; if (b_start >= |b|) then reset
+		jge .reset_b
 
-		add r10, 16
+		movdqu xmm0, [rcx + r12 * 2] ; sample_a
+		movdqu xmm1, [r15 + r13 * 2] ; sample_b
+
+		paddw xmm0, xmm1 ; sample_b + sample_b
+		psraw xmm0, 1 ; / 2
+
+		movdqu [rsi + r10], xmm0 ; sample_a
+
+		add r12, 8
+		add r13, 8
+
+		add r10, 16 ; avanzo de a 8 words en simultaneo
+		jmp .guarda
+		.reset_a:
+			xor r12, r12 ; a_start = 0
+			jmp .loop
+
+		.reset_b:
+			xor r13, r13 ; b_start = 0
+			jmp .loop		
 	.guarda:
 		cmp r10, rdi
 		jl .loop
+
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbp
 	ret
 
 global ej2_detect
