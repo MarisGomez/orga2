@@ -25,9 +25,9 @@ float ej2_detect(size_t size, int16_t signal[size], sincos_t freq[size]) { // Re
 	float im = 0;                                                          // * | sig [0] | sig [0] | sig [1] | sig [1] |
 	for (size_t i = 0; i < size; i++) {                                    // + | re0 | im0 | re1 | im1 | -> Queda sumar re0 + re1 e im0 + im1
 		re += signal[i] * freq[i].cos;                                     // 2) Partes reales e imaginarias separadas
-		im += signal[i] * freq[i].sin;                                     // | Sin [0] | Sin [1] | Sin [2] | Cos [3] | (Esto se logra con un shuffle o blend)
+		im += signal[i] * freq[i].sin;                                     // | Sin [0] | Sin [1] | Sin [2] | Sin [3] | (Esto se logra con un shuffle o blend)
 	}                                                                      // | Cos [0] | Cos [1] | Cos [2] | Cos [3] |
-	return 2 * sqrtf(re*re + im*im) / size;                                // * | sig [0] | sig [0] | sig [1] | sig [1] |
+	return 2 * sqrtf(re*re + im*im) / size;                                // * | sig [0] | sig [1] | sig [2] | sig [3] |
 }                                                                          // A realizar: conversiones 16 a 32, int a float, sumas horizonales
 
 void ej3_remove_duplicates(size_t size, char detected[size], char output[]) { // Mirar instrucción PTEST
