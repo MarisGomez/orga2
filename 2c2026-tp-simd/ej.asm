@@ -29,6 +29,13 @@ espacios:
 ceros:
 	times 10 db '0'
 	times 6  db 0x0
+mask_digitos:
+	times 10 db 0xFF
+	times 6  db 0x0
+mul_10:
+	dd 10, 1, 10, 1
+mul_100:
+	dd 100, 1, 100, 1
 ; ... y otra data que les resulte útil para resolver los ejercicios
 
 section .text
@@ -210,8 +217,60 @@ ej3_remove_duplicates:
 global ej4_get_numbers
 ; void ej4_get_numbers(size_t size, char numbers[10 * (size - 1) + 16], size_t output[size]);
 ;
-; size:   Está en RDI
-; signal: Está en RSI
-; output: Está en RDX
+; size:    Está en RDI
+; numbers: Está en RSI
+; output:  Está en RDX
 ej4_get_numbers:
+	push rbp
+	mov rbp, rsp
+
+	imul rdi, 10 ; ahora mido en bytes en lugar de ítems (10 bytes por c/numero)
+
+	xor r8, r8 ; outi = 0
+	xor r10, r10 ; i = 0
+	jmp .guarda
+	.loop:
+		movdqu xmm0, [rsi + r10] ; 10 bytes en simultaneo
+
+		movdqu xmm1, xmm0
+		psubb xmm1, [ceros] ; numbers[i] - '0'
+
+		movdqu xmm2, xmm1
+		pcmpeqb xmm2, [espacios] ; genero una mascara que pone 1 en los espacios y 0 en los numeros
+		pandn xmm2, xmm1 ; salida: ceros en los espacios y digitos en el resto
+
+		; CONSTRUYO VALOR (idea de mega: multiplicar por 1, 10, 100 y 1000 y hacer sumas horizontales)
+		pand xmm2, [mask_digitos] ; los 6 bytes restantes en cero (para que no afecten las multiplicaciones)
+		; me quedo con los primeros 4 digitos y los expando a dwords
+		pmovsxbd xmm3, xmm2 ; | 0 | 1 | 2 | 3 |
+		psrldq xmm2, 4 ; me corro 4 bytes a la derecha
+		pmovsxbd xmm4, xmm2 ; | 4 | 5 | 6 | 7 |
+		psrldq xmm2, 4
+		pmovsxbd xmm5, xmm2 ; | 8 | 9 | 0 | 0 | (la ultima dword es padding)
+		; multiplico por [10, 1, 10, 1]
+		pmulld xmm3, [mul_10] ; | 0 | 1 | 20 | 3 |
+		pmulld xmm4, [mul_10] ; | 40 | 5 | 60 | 7 |
+		pmulld xmm5, [mul_10] ; | 80 | 9 | 0 | 0 |
+
+		phaddd xmm3, xmm4 ; | 01 | 23 | 45 | 67 |
+		; multiplico por [100, 1, 100, 1]
+		pmulld xmm3, [mul_100] ; | 0100 | 23 | 4500 | 67 |
+		phaddd xmm3, xmm5 ; xmm3 = | 0123 | 4567 | 89 | 0 | 
+
+		movd r9d, xmm3 ; 0123
+		pextrd r11d, xmm3, 1 ; 4567
+		pextrd ecx, xmm3, 2 ; 89
+
+		imul r9, 10000 ; 01230000
+		add r9, r11 ; 01234567
+		imul r9, 100 ; 0123456700
+		add r9, rcx ; 0123456789
+		mov [rdx + r8*8], r9 ; output[outi++] = 0123456789
+
+		inc r8
+		add r10, 10
+	.guarda:
+		cmp r10, rdi
+		jl .loop
+	pop rbp
 	ret
