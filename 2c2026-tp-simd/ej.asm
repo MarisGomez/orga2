@@ -19,8 +19,8 @@ global ej_3_hecho
 global ej_4_hecho
 ej_1_hecho: db TRUE
 ej_2_hecho: db TRUE
-ej_3_hecho: db FALSE
-ej_4_hecho: db FALSE
+ej_3_hecho: db TRUE
+ej_4_hecho: db TRUE
 
 ALIGN 16
 espacios:
@@ -57,11 +57,11 @@ ej1_sample:
 	push r12
 	push r13
 	push r14
-	push r15
+	sub rsp, 8
 
 	mov r12, r8       ;; guardo los valores de a_start y b_start
 	mov r13, [RBP+24] ;;       para poder hacer reset
-	mov r15, [RBP+16] ; r15 = freq_b
+	mov r14, [RBP+16] ; r14 = freq_b
 
 	add rdi, rdi ; ahora mido en bytes en lugar de ítems (2 bytes por c/int16_t)
 
@@ -74,7 +74,7 @@ ej1_sample:
 		jge .reset_b
 
 		movdqu xmm0, [rcx + r12 * 2] ; sample_a
-		movdqu xmm1, [r15 + r13 * 2] ; sample_b
+		movdqu xmm1, [r14 + r13 * 2] ; sample_b
 
 		paddw xmm0, xmm1 ; sample_b + sample_b
 		psraw xmm0, 1 ; / 2
@@ -96,8 +96,7 @@ ej1_sample:
 	.guarda:
 		cmp r10, rdi
 		jl .loop
-
-	pop r15
+	add rsp, 8
 	pop r14
 	pop r13
 	pop r12
@@ -143,7 +142,6 @@ ej2_detect:
 	.guarda:
 		cmp r10, r8
 		jl .loop
-
 	; Sumo horizontalmente dos veces para im y re
 	haddps xmm5, xmm5
 	haddps xmm5, xmm5
@@ -167,17 +165,53 @@ ej2_detect:
 global ej3_remove_duplicates
 ; void ej3_remove_duplicates(size_t size, char detected[size], char output[]);
 ;
-; size:   Está en ??
-; signal: Está en ??
-; output: Está en ??
+; size:     Está en RDI
+; detected: Está en RSI
+; output:   Está en RDX
 ej3_remove_duplicates:
+	push rbp
+	mov rbp, rsp
+
+	mov r8, 0 ; outi = 0
+	mov r9, 0x20 ; c = ' ' (ascii)
+
+	xor r10, r10 ; i = 0
+	jmp .guarda
+	.loop:
+		movdqu xmm0, [rsi + r10] ; 16 samples
+		movdqu xmm1, xmm0 ; copia para comparar
+		punpcklbw xmm1, xmm1 ; extiendo los bytes mas bajos a words
+		punpcklwd xmm1, xmm1 ; extiendo los bytes mas bajos a doubles
+		shufps xmm1, xmm1, 0x00; extiendo el primer double. Queda: | S0 | S0 | S0 | ... | s0 |
+
+		pxor xmm1, xmm0; xmm1 = 000...0 si son todos iguales
+		ptest xmm1, xmm1
+		jne .continue
+		
+		cmp byte [rsi + r10], r9b ; (detected[i] == c)?
+		je .continue
+
+		mov r9b, byte [rsi + r10] ; c = detected[i]
+
+		cmp r9b, 0x20 ; (c == ' ')?
+		je .continue
+
+		mov byte [rdx + r8], r9b ; output[outi] = detected[i]
+		inc r8
+	.continue:
+		add r10, 16 ; avanzo de a 16 bytes en simultaneo
+		jmp .guarda	
+	.guarda:
+		cmp r10, rdi
+		jl .loop
+	pop rbp 
 	ret
 
 global ej4_get_numbers
 ; void ej4_get_numbers(size_t size, char numbers[10 * (size - 1) + 16], size_t output[size]);
 ;
-; size:   Está en ??
-; signal: Está en ??
-; output: Está en ??
+; size:   Está en RDI
+; signal: Está en RSI
+; output: Está en RDX
 ej4_get_numbers:
 	ret
