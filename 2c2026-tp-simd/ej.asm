@@ -86,7 +86,7 @@ ej1_sample:
 		paddw xmm0, xmm1 ; sample_b + sample_b
 		psraw xmm0, 1 ; / 2
 
-		movdqu [rsi + r10], xmm0 ; sample_a
+		movdqu [rsi + r10], xmm0 ; buf[i]
 
 		add r12, 8
 		add r13, 8
@@ -96,7 +96,6 @@ ej1_sample:
 		.reset_a:
 			xor r12, r12 ; a_start = 0
 			jmp .loop
-
 		.reset_b:
 			xor r13, r13 ; b_start = 0
 			jmp .loop		
@@ -136,8 +135,8 @@ ej2_detect:
 		shufps xmm0, xmm1, 0x88           ;; | Sin [0] | Sin [1] | Sin [2] | Sin [3] | 
 		shufps xmm3, xmm1, 0xDD           ;; | Cos [0] | Cos [1] | Cos [2] | Cos [3] |
 
-		pmovsxwd xmm4, [rsi + r10] ; extiendo signal
-		cvtdq2ps xmm4, xmm4               ;; | sig [0] | sig [1] | sig [2] | sig [3] |
+		pmovsxwd xmm4, [rsi + r10] ; extiendo signal a dwords
+		cvtdq2ps xmm4, xmm4               ;; | sig [0] | sig [1] | sig [2] | sig [3] | (floats)
 
 		mulps xmm0, xmm4 ; sin[i] * sig[i] (parcial)
 		addps xmm6, xmm0 ; im += xmm0
@@ -163,7 +162,7 @@ ej2_detect:
 
 	cvtsi2ss xmm7, rdi; Convierto size a float
 	shufps xmm7, xmm7, 0x00; extiendo 
-	divps xmm5, xmm7
+	divps xmm5, xmm7 ; / size
 
 	movaps xmm0, xmm5 ; valor de retorno
 	pop rbp
@@ -179,7 +178,7 @@ ej3_remove_duplicates:
 	push rbp
 	mov rbp, rsp
 
-	mov r8, 0 ; outi = 0
+	xor r8, r8 ; outi = 0
 	mov r9, 0x20 ; c = ' ' (ascii)
 
 	xor r10, r10 ; i = 0
@@ -189,7 +188,7 @@ ej3_remove_duplicates:
 		movdqu xmm1, xmm0 ; copia para comparar
 		punpcklbw xmm1, xmm1 ; extiendo los bytes mas bajos a words
 		punpcklwd xmm1, xmm1 ; extiendo los bytes mas bajos a doubles
-		shufps xmm1, xmm1, 0x00; extiendo el primer double. Queda: | S0 | S0 | S0 | ... | s0 |
+		shufps xmm1, xmm1, 0x00; extiendo el primer double. | S0 | S0 | S0 | ... | s0 |
 
 		pxor xmm1, xmm0; xmm1 = 000...0 si son todos iguales
 		ptest xmm1, xmm1
@@ -239,7 +238,7 @@ ej4_get_numbers:
 		pcmpeqb xmm2, [espacios] ; genero una mascara que pone 1 en los espacios y 0 en los numeros
 		pandn xmm2, xmm1 ; salida: ceros en los espacios y digitos en el resto
 
-		; CONSTRUYO VALOR (idea de mega: multiplicar por 1, 10, 100 y 1000 y hacer sumas horizontales)
+		; CONSTRUYO VALOR (idea de mega: multiplicar por 1, 10, 100 ... y hacer sumas horizontales)
 		pand xmm2, [mask_digitos] ; los 6 bytes restantes en cero (para que no afecten las multiplicaciones)
 		; me quedo con los primeros 4 digitos y los expando a dwords
 		pmovsxbd xmm3, xmm2 ; | 0 | 1 | 2 | 3 |
