@@ -33,14 +33,92 @@ gdt_entry_t gdt[GDT_COUNT] = {
             .g = 0x00,
             .base_31_24 = 0x00,
         },
-
     /* Completar la GDT: 
       Es conveniente completar antes las constantes definidas en defines.h y valerse
       de las mismas para definir los descriptores acá. Traten en lo posible de usar las 
       macros allí definidas.
       Tomen el descriptor nulo como ejemplo y definan el resto.
      */
-    
+    [GDT_IDX_CODE_0] =
+        {
+            .limit_15_0 = GDT_LIMIT_LOW(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .base_15_0 = GDT_BASE_LOW(0x00000000),
+            .base_23_16 = GDT_BASE_MID(0x00000000),
+            .type = DESC_TYPE_EXECUTE_READ,
+            .s = DESC_CODE_DATA,
+            .dpl = 0,
+            .p = 1,
+            .limit_19_16 = GDT_LIMIT_HIGH(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .avl = 0,
+            .l = 0,
+            .db = 1,
+            .g = 1,
+            .base_31_24 = GDT_BASE_HIGH(0x00000000),
+        },
+    [GDT_IDX_CODE_3] =
+        {
+            .limit_15_0 = GDT_LIMIT_LOW(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .base_15_0 = GDT_BASE_LOW(0x00000000),
+            .base_23_16 = GDT_BASE_MID(0x00000000),
+            .type = DESC_TYPE_EXECUTE_READ,
+            .s = DESC_CODE_DATA,
+            .dpl = 3,
+            .p = 1,
+            .limit_19_16 = GDT_LIMIT_HIGH(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .avl = 0,
+            .l = 0,
+            .db = 1,
+            .g = 1,
+            .base_31_24 = GDT_BASE_HIGH(0x00000000),
+        },
+    [GDT_IDX_DATA_0] =
+        {
+            .limit_15_0 = GDT_LIMIT_LOW(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .base_15_0 = GDT_BASE_LOW(0x00000000),
+            .base_23_16 = GDT_BASE_MID(0x00000000),
+            .type = DESC_TYPE_READ_WRITE,
+            .s = DESC_CODE_DATA,
+            .dpl = 0,
+            .p = 1,
+            .limit_19_16 = GDT_LIMIT_HIGH(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .avl = 0,
+            .l = 0,
+            .db = 1,
+            .g = 1,
+            .base_31_24 = GDT_BASE_HIGH(0x00000000),
+        },
+    [GDT_IDX_DATA_3] =
+        {
+            .limit_15_0 = GDT_LIMIT_LOW(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .base_15_0 = GDT_BASE_LOW(0x00000000),
+            .base_23_16 = GDT_BASE_MID(0x00000000),
+            .type = DESC_TYPE_READ_WRITE,
+            .s = DESC_CODE_DATA,
+            .dpl = 3,
+            .p = 1,
+            .limit_19_16 = GDT_LIMIT_HIGH(GDT_LIMIT_4KIB(FLAT_SEGM_SIZE)),
+            .avl = 0,
+            .l = 0,
+            .db = 1,
+            .g = 1,
+            .base_31_24 = GDT_BASE_HIGH(0x00000000),
+        },
+    [GDT_IDX_VIDEO] =
+        {
+            .limit_15_0 = GDT_LIMIT_LOW(GDT_LIMIT_BYTES(VIDEO_SEGM_SIZE)),
+            .base_15_0 = GDT_BASE_LOW(VIDEO),
+            .base_23_16 = GDT_BASE_MID(VIDEO),
+            .type = DESC_TYPE_READ_WRITE,
+            .s = DESC_CODE_DATA,
+            .dpl = 0,
+            .p = 1,
+            .limit_19_16 = GDT_LIMIT_HIGH(GDT_LIMIT_BYTES(VIDEO_SEGM_SIZE)),
+            .avl = 0,
+            .l = 0,
+            .db = 1,
+            .g = 0,
+            .base_31_24 = GDT_BASE_HIGH(VIDEO),
+        }
 };
 
 // Aca hay una inicializacion estatica de una structura que tiene su primer componente el tamano 
