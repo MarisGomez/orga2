@@ -8,11 +8,12 @@
 global start
 
 
-; COMPLETAR - Agreguen declaraciones extern según vayan necesitando
-
-; COMPLETAR - Definan correctamente estas constantes cuando las necesiten
-;%define CS_RING_0_SEL ??   
-;%define DS_RING_0_SEL ??   
+; Agreguen declaraciones extern según vayan necesitando
+extern GDT_DESC
+; Definan correctamente estas constantes cuando las necesiten
+; CS_RING_0_SEL apunta a GDT_IDX_CODE_0 y DS_RING_0_SEL apunta a GDT_IDX_DATA_0
+%define CS_RING_0_SEL ((1 << 3) | 0)
+%define DS_RING_0_SEL ((3 << 3) | 0)
 
 
 BITS 16
@@ -39,7 +40,8 @@ start:
     ; ||  Salto a modo protegido  ||
     ; ==============================
 
-    ; COMPLETAR - Deshabilitar interrupciones (Parte 1: Pasaje a modo protegido)
+    ;Deshabilitar interrupciones (Parte 1: Pasaje a modo protegido)
+    cli ; clear interrupt flag
 
     ; Cambiar modo de video a 80 X 50
     mov ax, 0003h
@@ -48,21 +50,22 @@ start:
     mov ax, 1112h
     int 10h ; load 8x8 font
 
-    ; COMPLETAR - Imprimir mensaje de bienvenida - MODO REAL (Parte 1: Pasaje a modo protegido)
-    ; (revisar las funciones definidas en print.mac y los mensajes se encuentran en la
-    ; sección de datos)
+    ; Imprimir mensaje de bienvenida - MODO REAL (Parte 1: Pasaje a modo protegido)
+    print_text_rm start_rm_msg, start_rm_len, 0x0A, 0, 0 
 
-    ; COMPLETAR - Habilitar A20 (Parte 1: Pasaje a modo protegido)
-    ; (revisar las funciones definidas en a20.asm)
+    ; Habilitar A20 (Parte 1: Pasaje a modo protegido)
+    call A20_enable
 
-    ; COMPLETAR - los defines para la GDT en defines.h y las entradas de la GDT en gdt.c
-    ; COMPLETAR - Cargar la GDT (Parte 1: Pasaje a modo protegido)
+    ; Cargar la GDT (Parte 1: Pasaje a modo protegido)
+    lgdt [GDT_DESC] ; load GDT
 
-    ; COMPLETAR - Setear el bit PE del registro CR0 (Parte 1: Pasaje a modo protegido)
+    ; Setear el bit PE del registro CR0 (Parte 1: Pasaje a modo protegido)
+    mov eax, CR0
+    or eax, 1
+    mov CR0, eax
 
-    ; COMPLETAR - Saltar a modo protegido (far jump) (Parte 1: Pasaje a modo protegido)
-    ; (recuerden que un far jmp se especifica como jmp CS_selector:address)
-    ; Pueden usar la constante CS_RING_0_SEL definida en este archivo
+    ; Saltar a modo protegido (far jump) (Parte 1: Pasaje a modo protegido)
+    jmp CS_RING_0_SEL:modo_protegido
 
 BITS 32
 modo_protegido:
