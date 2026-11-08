@@ -10,6 +10,7 @@ global start
 
 ; Agreguen declaraciones extern según vayan necesitando
 extern GDT_DESC
+extern screen_draw_layout
 ; Definan correctamente estas constantes cuando las necesiten
 ; CS_RING_0_SEL apunta a GDT_IDX_CODE_0 y DS_RING_0_SEL apunta a GDT_IDX_DATA_0
 %define CS_RING_0_SEL ((1 << 3) | 0)
@@ -69,15 +70,23 @@ start:
 
 BITS 32
 modo_protegido:
-    ; COMPLETAR (Parte 1: Pasaje a modo protegido) - A partir de aca, todo el codigo se va a ejectutar en modo protegido
-    ; Establecer selectores de segmentos DS, ES, GS, FS y SS en el segmento de datos de nivel 0
-    ; Pueden usar la constante DS_RING_0_SEL definida en este archivo
+    ; (Parte 1: Pasaje a modo protegido) - Establecer selectores de segmentos DS, ES, GS, FS y SS en el segmento de datos de nivel 0
+    mov ax, DS_RING_0_SEL
+    mov ds, ax
+    mov es, ax
+    mov gs, ax
+    mov fs, ax
+    mov ss, ax
 
-    ; COMPLETAR - Establecer el tope y la base de la pila (Parte 1: Pasaje a modo protegido)
+    ; Establecer el tope y la base de la pila (Parte 1: Pasaje a modo protegido)
+    mov ebp, 0x25000
+    mov esp, 0x25000
 
-    ; COMPLETAR - Imprimir mensaje de bienvenida - MODO PROTEGIDO (Parte 1: Pasaje a modo protegido)
+    ; Imprimir mensaje de bienvenida - MODO PROTEGIDO (Parte 1: Pasaje a modo protegido)
+    print_text_pm start_pm_msg, start_pm_len, 0x04, 0, 0 
 
     ; COMPLETAR - Inicializar pantalla (Parte 1: Pasaje a modo protegido)
+    call screen_draw_layout
     
     ; ===================================
     ; ||     (Parte 3: Paginación)     ||

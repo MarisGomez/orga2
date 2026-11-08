@@ -56,7 +56,7 @@ void print_hex(uint32_t numero, int32_t size, uint32_t x, uint32_t y,
   }
 }
 
-void screen_draw_box(uint32_t fInit, uint32_t cInit, uint32_t fSize,
+void screen_draw_box(uint32_t fInit, uint32_t cInit, uint32_t fSize,     // RELLENA UN RECTÁNGULO
                      uint32_t cSize, uint8_t character, uint8_t attr) {
   ca(*p)[VIDEO_COLS] = (ca(*)[VIDEO_COLS])VIDEO;
   uint32_t f;
@@ -70,4 +70,16 @@ void screen_draw_box(uint32_t fInit, uint32_t cInit, uint32_t fSize,
 }
 
 void screen_draw_layout(void) {
+  uint16_t fondo = C_BG_RED | C_FG_WHITE;
+  uint16_t titulo = C_BG_BLACK | C_FG_WHITE;
+
+  // Limpiar toda la pantalla
+  screen_draw_box(0, 0, VIDEO_FILS, VIDEO_COLS, ' ', fondo);
+
+  print("Bienvenidos al...", 30, 20, fondo);
+
+  screen_draw_box(24, 0, 3, VIDEO_COLS, ' ', titulo);
+  print("<3 LoviuLoviu SO <3", 30, 25, titulo);
+  
+  print("De Fede & Mari :D", 30, 30, fondo);
 }
