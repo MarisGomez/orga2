@@ -16,6 +16,7 @@ sched_task_selector:   dw 0xFFFF
 
 ;; PIC
 extern pic_finish1
+extern process_scancode
 
 ;; Sched
 extern sched_next_task
@@ -151,14 +152,14 @@ ISRNE 20
 ;; Rutina de atención del RELOJ
 ;; -------------------------------------------------------------------------- ;;
 global _isr32
-; COMPLETAR (Parte 2: Interrupciones): La rutina se encuentra escrita parcialmente. Completar la rutina
+; (Parte 2: Interrupciones): La rutina se encuentra escrita parcialmente. Completar la rutina
 _isr32:
-    pushad
+    pushad       ;; protegen los registros del código interrumpido
     ; 1. Le decimos al PIC que vamos a atender la interrupción
-    ; COMPLETAR
+    call pic_finish1
     
     ; 2. Imprimimos el reloj que gira en pantalla
-    ; COMPLETAR
+    call next_clock
     
     ; 3. (Parte 4: Tareas) Realizamos el cambio de tareas en caso de ser necesario
     ; COMPLETAR
@@ -168,40 +169,47 @@ _isr32:
     ; call tasks_tick ; DESCOMENTAR (Parte 4: Tareas)
     ; 4. Actualizamos la "interfaz" del sistema en pantalla
     ; call tasks_screen_update ; DESCOMENTAR (Parte 4: Tareas)
-    popad
-    iret
+    popad        ;; protegen los registros del código interrumpido
+    iret         ;; restaura EIP, CS y EFLAGS
 
 ;; Rutina de atención del TECLADO
 ;; -------------------------------------------------------------------------- ;;
 global _isr33
-; COMPLETAR: Implementar la rutina
+; Implementar la rutina
 _isr33:
-    pushad
+    pushad       ;; protegen los registros del código interrumpido
     ; 1. Le decimos al PIC que vamos a atender la interrupción
+    call pic_finish1
     
     ; 2. Leemos la tecla desde el teclado y la procesamos con la funcion process_scancode (Durante Parte 2: Interrupciones) o tasks_input_process (Durante Parte 4: Tareas)
-    
-    popad
-    iret
+    xor eax, eax
+    in al, 0x60  ;; lee 8 bits del puerto del teclado y los deja en al
+
+    push eax
+    call process_scancode
+    add esp, 4   ;; limpia el argumento de la pila
+
+    popad        ;; protegen los registros del código interrumpido
+    iret         ;; restaura EIP, CS y EFLAGS
 
 
 ;; Rutinas de atención de las SYSCALLS
 ;; -------------------------------------------------------------------------- ;;
 
 global _isr88
-; COMPLETAR: Implementar la rutina
+; Implementar la rutina
 ; Para la seccion de interrupciones: que modifique el valor de eax por 0x58
 ; Para las secciones de paginación y tareas: que llame a la funcion task_syscall_draw
 _isr88:
-
+  mov eax, 0x58
   iret
 
 
-; COMPLETAR: Implementar la rutina
+; Implementar la rutina
 ; La rutina debe modificar el valor de eax por 0x62
 global _isr98
 _isr98:
-  
+  mov eax, 0x62
   iret
 
 ; PushAD Order

@@ -11,6 +11,10 @@ global start
 ; Agreguen declaraciones extern según vayan necesitando
 extern GDT_DESC
 extern screen_draw_layout
+extern idt_init
+extern IDT_DESC
+extern pic_reset
+extern pic_enable
 ; Definan correctamente estas constantes cuando las necesiten
 ; CS_RING_0_SEL apunta a GDT_IDX_CODE_0 y DS_RING_0_SEL apunta a GDT_IDX_DATA_0
 %define CS_RING_0_SEL ((1 << 3) | 0)
@@ -85,7 +89,7 @@ modo_protegido:
     ; Imprimir mensaje de bienvenida - MODO PROTEGIDO (Parte 1: Pasaje a modo protegido)
     print_text_pm start_pm_msg, start_pm_len, 0x04, 0, 0 
 
-    ; COMPLETAR - Inicializar pantalla (Parte 1: Pasaje a modo protegido)
+    ; Inicializar pantalla (Parte 1: Pasaje a modo protegido)
     call screen_draw_layout
     
     ; ===================================
@@ -121,24 +125,34 @@ modo_protegido:
 
     ; COMPLETAR - las funciones en idt.c
 
-    ; COMPLETAR - Inicializar y cargar la IDT
+    ; Inicializar y cargar la IDT
+    call idt_init    ;; inicializo IDT
+    lidt [IDT_DESC]  ;; cargo IDT en memoria 
 
-    ; COMPLETAR - Reiniciar y habilitar el controlador de interrupciones (ver pic.c)
+    ; Reiniciar y habilitar el controlador de interrupciones (ver pic.c)
+    call pic_reset
+    call pic_enable
 
-    ; COMPLETAR - Rutinas de atención de reloj, teclado, e interrupciones 88 y 89 (en isr.asm)
+    ; Rutinas de atención de reloj, teclado, e interrupciones 88 y 89 (en isr.asm)
 
     ; COMPLETAR (Parte 4: Tareas)- Cargar tarea inicial
 
-    ; COMPLETAR - Habilitar interrupciones (!! en etapas posteriores, evaluar si se debe comentar este código !!)
+    ; Habilitar interrupciones (!! en etapas posteriores, evaluar si se debe comentar este código !!)
+    sti
     
     ; NOTA: Pueden chequear que las interrupciones funcionen forzando a que se
     ;       dispare alguna excepción (lo más sencillo es usar la instrucción
     ;       `int3`)
     ;int3
 
-    ; COMPLETAR - Probar Sys_call (para etapas posteriores, comentar este código)
+    ; Probar Sys_call (para etapas posteriores, comentar este código)
+    mov eax, 0
+    int 88
 
-    ; COMPLETAR - Probar generar una excepción (para etapas posteriores, comentar este código)
+    mov eax, 0
+    int 98
+
+    ; Probar generar una excepción (para etapas posteriores, comentar este código)
     
     ; ========================
     ; ||  (Parte 4: Tareas)  ||
