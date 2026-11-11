@@ -62,14 +62,14 @@ TALLER System Programming - Arquitectura y Organizacion de Computadoras - FCEN
 #define GDT_BASE_HIGH(base) (uint8_t)((((uint32_t)(base)) >> 24) & 0xFF)
 
 
-/* COMPLETAR - (Parte 1: Pasaje a modo protegido)  - Valores de atributos */ 
+/* (Parte 1: Pasaje a modo protegido)  - Valores de atributos */ 
 /* -------------------------------------------------------------------------- */
 #define DESC_CODE_DATA 1
 #define DESC_SYSTEM    0
 #define DESC_TYPE_EXECUTE_READ 0xA // 1010
 #define DESC_TYPE_READ_WRITE 0x2 // 0010 
 
-/* COMPLETAR - Tamaños de segmentos */ 
+/* Tamaños de segmentos */ 
 #define FLAT_SEGM_SIZE 0x33100000 // 817 * 1024 * 1024
 #define VIDEO_SEGM_SIZE 0x1F40 // 50 filas * 80 columnas * 2 bytes (struct ca) = 8000
 
@@ -95,14 +95,13 @@ VIRT_PAGE_TABLE(X)  devuelve la page table entry correspondiente, donde X es una
 VIRT_PAGE_DIR(X)    devuelve el page directory entry, donde X es una dirección virtual
 CR3_TO_PAGE_DIR(X)  devuelve el page directory, donde X es el contenido del registro CR3
 MMU_ENTRY_PADDR(X)  devuelve la dirección física de la base de un page frame o de un page table, donde X es el campo de 20 bits en una PTE o PDE
-
-#define VIRT_PAGE_OFFSET(X) ??
-#define VIRT_PAGE_TABLE(X)  ??
-#define VIRT_PAGE_DIR(X)    ??
-#define CR3_TO_PAGE_DIR(X)  ??
-#define MMU_ENTRY_PADDR(X)  ??
-
 */
+
+#define VIRT_PAGE_OFFSET(X) ((X) & 0X0000FFF) // 0000 0000 0000 0000 0000 1111 1111 1111 (máscara que conserva el offset)
+#define VIRT_PAGE_TABLE(X)  (((X) >> 12) & 0X00003FF) // 0000 0000 0000 0000 0000 0011 1111 1111 (máscara que conserva la tabla)
+#define VIRT_PAGE_DIR(X)    (((X) >> 22) & 0X00003FF) // 0000 0000 0000 0000 0000 0011 1111 1111 (máscara que conserva el directorio)
+#define CR3_TO_PAGE_DIR(X)  ((X) & 0xFFFFF000) // 1111 1111 1111 1111 1111 0000 0000 0000 (máscara que conseva los bits 31-12) NO SE DESPLAZA PQ CR3 YA CONTIENE UNA DIRECCIÓN FÍSICA
+#define MMU_ENTRY_PADDR(X)  ((X) << 12) 
 
 #define MMU_P (1 << 0)
 #define MMU_W (1 << 1)

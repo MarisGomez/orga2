@@ -15,6 +15,8 @@ extern idt_init
 extern IDT_DESC
 extern pic_reset
 extern pic_enable
+extern mmu_init_kernel_dir
+extern mmu_init_task_dir
 ; Definan correctamente estas constantes cuando las necesiten
 ; CS_RING_0_SEL apunta a GDT_IDX_CODE_0 y DS_RING_0_SEL apunta a GDT_IDX_DATA_0
 %define CS_RING_0_SEL ((1 << 3) | 0)
@@ -96,15 +98,20 @@ modo_protegido:
     ; ||     (Parte 3: Paginación)     ||
     ; ===================================
 
-    ; COMPLETAR - los defines para la MMU en defines.h
-    ; COMPLETAR - las funciones en mmu.c
+    ; los defines para la MMU en defines.h
+    ; las funciones en mmu.c
     ; COMPLETAR - reemplazar la implementacion de la interrupcion 88 (ver comentarios en isr.asm)
     ; COMPLETAR - La rutina de atención del page fault en isr.asm
-    ; COMPLETAR - Inicializar el directorio de paginas
+    ; Inicializar el directorio de paginas
+    call mmu_init_kernel_dir
 
-    ; COMPLETAR - Cargar directorio de paginas 
+    ; Cargar directorio de paginas
+    mov cr3, eax
 
-    ; COMPLETAR - Habilitar paginacion 
+    ; Habilitar paginacion
+    mov eax, cr0
+    or eax, 0x80000000 ;; 1000 0000 0000 0000 0000 0000 0000 0000 (cr0.pg = 1 para activar paginación)
+    mov cr0, eax
 
     ; ========================
     ; ||  (Parte 4: Tareas) ||
@@ -158,11 +165,30 @@ modo_protegido:
     ; ||  (Parte 4: Tareas)  ||
     ; ========================
     
-    ; COMPLETAR - Inicializar el directorio de paginas de la tarea de prueba
+    ; Inicializar el directorio de paginas de la tarea de prueba
+    cli ;; Evito que una interrupción se meta en el medio
 
-    ; COMPLETAR - Cargar directorio de paginas de la tarea
+    mov ebx, cr3 ;; Guardo el cr3 actual en pila del kernel
+    push ebx
 
-    ; COMPLETAR - Restaurar directorio de paginas del kernel
+    push 0x18000
+    call mmu_init_task_dir ;; mmu_init_task_dir(0x18000) devuelve en eax el cr3 de la tarea ficticia
+    add esp, 4
+
+    ; Cargar directorio de paginas de la tarea
+    mov cr3, eax ;; eax contiene el cr3 del directorio de páginas de tarea
+
+    ;; Primera escritura
+    mov dword [0x07000000], 0x12345678 ;; 0x07000000 todavia no esta mapeada, se dispara page fault
+
+    ;; Segunda escritura
+    mov dword [0x07000000], 0x12345670 ;; 0x07000000 ya quedó mapeada, no debe disparar page fault
+
+    ; Restaurar directorio de paginas del kernel
+    pop ebx
+    mov cr3, ebx
+
+    sti ;; Vuelvo a habilitar interrupciones
 
     ; COMPLETAR - Saltar a la primera tarea: Idle
 
