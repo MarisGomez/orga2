@@ -140,5 +140,47 @@ ret
 ; ----------------------------------------------------
 global rastrear_linea_evolutiva
 rastrear_linea_evolutiva:
-    xor rax, rax
-    ret
+push rbp
+mov rbp, rsp
+push r12
+push r13
+push r14
+push r15
+push rbx
+sub rsp, 8
+
+mov r12, rdi ; pokedex
+mov r13, rsi ; id_final / id_actual
+
+xor r14, r14 ; cabeza = NULL
+
+.while:
+    test r13, r13 ; id_actual == 0
+    jz .fin
+
+    mov rdi, r12 ; pokedex
+    mov rsi, r13 ; id_actual
+    call buscar_pokemon_por_id
+    mov r15, rax ; pokemon
+
+    mov rdi, NODO_EVOLUCION_TAMANIO
+    call malloc
+    mov rbx, rax ; nodo
+
+    mov word[rbx + NODO_EVOLUCION_ID_OFFSET], r13w
+    mov [rbx + NODO_EVOLUCION_EVOLUCIONA_EN_OFFSET], r14
+    mov r14, rbx
+
+    mov r13w, word[r15 + POKEMON_EVOLUCIONA_DE_ID_OFFSET]
+    jmp .while
+.fin:
+mov rax, r14
+
+add rsp, 8
+pop rbx
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbp
+ret
