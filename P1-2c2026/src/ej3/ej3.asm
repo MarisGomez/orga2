@@ -79,23 +79,64 @@ extern free
 ; ----------------------------------------------------
 ; pokemon_t* buscar_pokemon_por_id(pokedex_t* pokedex, uint16_t id)
 ; Argumentos:
-;   ??? = pokedex_t* pokedex
-;   ???  = uint16_t id
+;   RDI = pokedex_t* pokedex
+;   RSI  = uint16_t id
 ; Retorno:
-;   ??? = pokemon_t* (o NULL si no se encuentra / id == 0)
+;   RAX = pokemon_t* (o NULL si no se encuentra / id == 0)
 ; ----------------------------------------------------
 global buscar_pokemon_por_id
 buscar_pokemon_por_id:
-    xor rax, rax
-    ret
+push rbp
+mov rbp, rsp
+push r12
+push r13
+
+mov r12, rdi ; pokedex
+mov r13, rsi ; id
+
+xor r8, r8 ; i = 0
+.ciclo_filas:
+    cmp r8d, dword[r12 + POKEDEX_FILAS_OFFSET]
+    jae .fin
+
+    xor r9, r9 ; j = 0
+    .ciclo_columnas:
+        cmp r9d, dword[r12 + POKEDEX_COLUMNAS_OFFSET]
+        jae .siguiente_fila
+
+        mov r10, [r12 + POKEDEX_POKEMONS_OFFSET]
+        mov r11, [r10 + r8 * 8 ]
+        mov rcx, [r11 + r9 * 8] ;; pokemon_actual
+
+        test rcx, rcx
+        jz .siguiente_columna
+
+        cmp word[rcx + POKEMON_ID_OFFSET], r13w
+        jne .siguiente_columna
+
+        mov rax, rcx
+        jmp .epilogo
+    .siguiente_columna:
+        inc r9
+        jmp .ciclo_columnas
+    .siguiente_fila:
+        inc r8
+        jmp .ciclo_filas
+.fin:
+xor rax, rax
+.epilogo:
+pop r13
+pop r12
+pop rbp
+ret
 
 ; ----------------------------------------------------
 ; nodo_evolucion_t* rastrear_linea_evolutiva(pokedex_t* pokedex, uint16_t id_final)
 ; Argumentos:
-;   ??? = pokedex_t* pokedex
-;   ???  = uint16_t id_final
+;   RDI = pokedex_t* pokedex
+;   RSI  = uint16_t id_final
 ; Retorno:
-;   ??? = nodo_evolucion_t*
+;   RAX = nodo_evolucion_t*
 ; ----------------------------------------------------
 global rastrear_linea_evolutiva
 rastrear_linea_evolutiva:

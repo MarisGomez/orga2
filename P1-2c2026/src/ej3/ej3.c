@@ -7,25 +7,26 @@ pokemon_t* buscar_pokemon_por_id(pokedex_t* pokedex, uint16_t id) {
         for (uint32_t j = 0; j < pokedex->columnas; j++){
             pokemon_t* pokemon_actual = (pokemon_t*) pokedex->pokemons[i][j];
 
-            if(pokemon_actual->id == id) return pokemon_actual;
+            if(pokemon_actual != NULL && pokemon_actual->id == id) return pokemon_actual;
         }
     }
+    return NULL;
 }
 
 
 nodo_evolucion_t* rastrear_linea_evolutiva(pokedex_t* pokedex, uint16_t id_final) {
-    nodo_evolucion_t* res = (nodo_evolucion_t*) malloc(sizeof(nodo_evolucion_t));
+    nodo_evolucion_t* cabeza = NULL;
+    uint16_t id_actual = id_final;
 
-    pokemon_t* pokemon = buscar_pokemon_por_id(pokedex, id_final);
+    while(id_actual != 0){
+        pokemon_t* pokemon = buscar_pokemon_por_id(pokedex, id_actual);
 
-    while(pokemon->evoluciona_de_id != 0){
-        res->id = pokemon->evoluciona_de_id;
-        res->evoluciona_en = pokemon->id;
+        nodo_evolucion_t* nodo = (nodo_evolucion_t*) malloc(sizeof(nodo_evolucion_t));
+        nodo->id = id_actual;
+        nodo->evoluciona_en = cabeza;
+        cabeza = nodo;
 
-        pokemon->id = pokemon->evoluciona_de_id;
+        id_actual = pokemon->evoluciona_de_id;
     }
-
-    res->id = 0;
-    res->evoluciona_en = pokemon->id;
-    return pokemon;
+    return cabeza;
 }
