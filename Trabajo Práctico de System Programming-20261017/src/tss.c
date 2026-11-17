@@ -23,7 +23,7 @@ tss_t tss = {
  * Inicializa las primeras entradas de tss (inicial y idle)
  */
 void tss_init(void) {
-  // COMPLETAR
+  
   gdt[GDT_IDX_TASK_INITIAL] = (gdt_entry_t) {
     .g = 0,
     .limit_15_0 = sizeof(tss_t) - 1,

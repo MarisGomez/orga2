@@ -133,7 +133,7 @@ ISRE 10
 ISRE 11
 ISRE 12
 ISRE 13
-ISRE 14 ; comentar esta línea en la parte 3 (paginación)
+; ISRE 14 ; comentar esta línea en la parte 3 (paginación)
 ISRNE 15
 ISRNE 16
 ISRE 17
@@ -143,11 +143,27 @@ ISRNE 20
 
 ;; Rutina de atención de Page Fault ISRE 14 ; Descomentar esta rutina en la parte 3 (paginación)
 ;; -------------------------------------------------------------------------- ;;
-;global _isr14
+global _isr14
 
-;_isr14:
-;	add esp, 4 ; error code
-;	iret
+_isr14:
+  pushad
+
+  mov eax, cr2 ;; La dirección que falló está en cr2
+  push eax
+  call page_fault_handler ;; Devuelve un bool
+  add esp, 4 ;; Limpia el argumento
+
+  test al, al
+  jz .ring0_exception ;; Si devuelve false, se deriva a kernel_exception
+
+  ;; Si devuelve true:
+  popad ;; Restaura los registros originales
+  add esp, 4 ; Descarta el error code del #PF
+	iret ;; Retoma la instruccion que produjo el #PF
+
+  .ring0_exception:
+	call kernel_exception
+  jmp $
 
 ;; Rutina de atención del RELOJ
 ;; -------------------------------------------------------------------------- ;;
@@ -186,7 +202,7 @@ _isr33:
     in al, 0x60  ;; lee 8 bits del puerto del teclado y los deja en al
 
     push eax
-    call process_scancode
+    call tasks_input_process
     add esp, 4   ;; limpia el argumento de la pila
 
     popad        ;; protegen los registros del código interrumpido
@@ -201,7 +217,11 @@ global _isr88
 ; Para la seccion de interrupciones: que modifique el valor de eax por 0x58
 ; Para las secciones de paginación y tareas: que llame a la funcion task_syscall_draw
 _isr88:
-  mov eax, 0x58
+  pushad
+  push eax
+  call tasks_syscall_draw
+  add esp, 4
+  popad
   iret
 
 

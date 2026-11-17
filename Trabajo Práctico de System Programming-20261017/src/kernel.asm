@@ -17,11 +17,15 @@ extern pic_reset
 extern pic_enable
 extern mmu_init_kernel_dir
 extern mmu_init_task_dir
+extern tss_init
 ; Definan correctamente estas constantes cuando las necesiten
 ; CS_RING_0_SEL apunta a GDT_IDX_CODE_0 y DS_RING_0_SEL apunta a GDT_IDX_DATA_0
 %define CS_RING_0_SEL ((1 << 3) | 0)
 %define DS_RING_0_SEL ((3 << 3) | 0)
 
+;; GDT_IDX_TASK_INITIAL = 11 (definido en task_defines.h)
+;; Selector de segmento: Índice (bits 3-15) | TI (bit 2) | RPL (bits 0-1). Entonces, selector: (11 << 3) | (TI << 2) | RPL
+%define GDT_TSS_SELECTOR (11 << 3)        
 
 BITS 16
 ;; Saltear seccion de datos
@@ -98,11 +102,11 @@ modo_protegido:
     ; ||     (Parte 3: Paginación)     ||
     ; ===================================
 
-    ; los defines para la MMU en defines.h
-    ; las funciones en mmu.c
-    ; COMPLETAR - reemplazar la implementacion de la interrupcion 88 (ver comentarios en isr.asm)
-    ; COMPLETAR - La rutina de atención del page fault en isr.asm
-    ; Inicializar el directorio de paginas
+    ; los defines para la MMU en defines.h                                            // HECHO
+    ; las funciones en mmu.c                                                          // HECHO
+    ; reemplazar la implementacion de la interrupcion 88 (ver comentarios en isr.asm) // HECHO
+    ; La rutina de atención del page fault en isr.asm                                 // HECHO
+    ; Inicializar el directorio de paginas                                            // HECHO
     call mmu_init_kernel_dir
 
     ; Cargar directorio de paginas
@@ -117,9 +121,10 @@ modo_protegido:
     ; ||  (Parte 4: Tareas) ||
     ; ========================
 
-    ; COMPLETAR - reemplazar la implementacion de la interrupcion 88 (ver comentarios en isr.asm)
-    ; COMPLETAR - las funciones en tss.c
-    ; COMPLETAR - Inicializar tss
+    ; reemplazar la implementacion de la interrupcion 88 (ver comentarios en isr.asm) // HECHO
+    ; las funciones en tss.c                                                          // HECHO
+    ; Inicializar tss
+    call tss_init ;; Modifica el arreglo GDT en memoria (no hace falta volver a hacer lgdt)
 
     ; COMPLETAR - Inicializar el scheduler
 
@@ -130,7 +135,7 @@ modo_protegido:
     ; ||   (Parte 2: Interrupciones)   ||
     ; ===================================
 
-    ; COMPLETAR - las funciones en idt.c
+    ; las funciones en idt.c                                                           // HECHO
 
     ; Inicializar y cargar la IDT
     call idt_init    ;; inicializo IDT
@@ -140,9 +145,11 @@ modo_protegido:
     call pic_reset
     call pic_enable
 
-    ; Rutinas de atención de reloj, teclado, e interrupciones 88 y 89 (en isr.asm)
+    ; Rutinas de atención de reloj, teclado, e interrupciones 88 y 89 (en isr.asm)     // HECHO 
 
-    ; COMPLETAR (Parte 4: Tareas)- Cargar tarea inicial
+    ; (Parte 4: Tareas)- Cargar tarea inicial
+    mov ax, GDT_TSS_SELECTOR ;; El selector es de 15 bits
+    ltr ax ;; LTR carga registro TR (Task Register)
 
     ; Habilitar interrupciones (!! en etapas posteriores, evaluar si se debe comentar este código !!)
     sti
