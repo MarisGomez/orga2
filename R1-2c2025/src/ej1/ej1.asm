@@ -63,6 +63,70 @@ REC_SIZE                   EQU 16    ; sizeof(Recorrido)       | DEBE ESTAR ALIN
 
 ; Notar que el enum aparece como puntero, entonces no afecta los offsets
 
+;; mapa [RDI]
+;; rec  [RSI]
+;; acciones_ejecutadas [RDX]
 global  encontrarTesoroEnMapa
 encontrarTesoroEnMapa:
-    ret
+push rbp
+mov rbp, rsp
+push r12
+push r13
+push r14
+push r15
+
+mov r12, rdi ; mapa
+mov r13, rsi ; rec
+mov r14, rdx ; acciones_ejecutadas
+
+mov qword[r14], 0 ; *acciones_ejecutadas = 0
+mov r15d, dword[r12 + MAP_ID_ENTRADA_OFFSET] ;; actual
+
+mov r8, [r12 + MAP_HABITACIONES_OFFSET] ; mapa->habitaciones
+imul r9, r15, HAB_SIZE                  ; actual * HAB_SIZE
+add r8, r9                              ; mapa->habitaciones[actual]
+
+cmp byte[r8 + HAB_CONTENIDO_OFFSET + CONT_ES_TESORO_OFFSET], 0
+jne .es_true
+
+xor r11, r11 ; i = 0
+.ciclo:
+    cmp r11, qword[r13 + REC_CANT_ACCIONES_OFFSET]
+    jae .es_false
+
+    mov rcx, [r13 + REC_ACCIONES_OFFSET] ; rec->acciones
+    mov edx, dword[rcx + r11 * 4]        ; rec->acciones[i] (hacemos *4 pq cada Accion mide 4: enum se representa como int)
+
+    mov r10d, dword[r8 + HAB_VECINOS_OFFSET + rdx * 4] ; vecinos[direccion] = siguiente
+
+    cmp r10, 99
+    je .es_false
+
+    mov r15, r10 ; actual = siguiente
+    inc [r14]
+
+    mov r8, [r12 + MAP_HABITACIONES_OFFSET] ; mapa->habitaciones
+    imul r9, r15, HAB_SIZE                  ; actual * HAB_SIZE
+    add r8, r9                              ; mapa->habitaciones[actual]
+
+    cmp byte[r8 + HAB_CONTENIDO_OFFSET + CONT_ES_TESORO_OFFSET], 0
+    jne .es_true
+
+    inc r11
+    jmp .ciclo
+
+.es_false:
+    xor eax, eax
+    jmp .fin
+
+.es_true:
+    mov eax, 1
+    jmp .fin
+
+.fin:
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbp
+ret
